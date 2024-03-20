@@ -1,0 +1,20 @@
+.contain {
+    width: auto;
+    height: auto;
+    text-align: center;
+}
+
+
+.contain {
+    width: auto;
+    height: 500px;
+}
+
+.txtarea {
+    margin-top: 300px;
+    font-size: 30px;
+}
+
+.buttons {
+    margin-top: 200px;
+}
