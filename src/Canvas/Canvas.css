@@ -1,13 +1,20 @@
 .text-updater-node {
-  height: 100%;
+  height: 200px;
   border: 1px solid #111;
   padding: 10px;
-  border-radius: 10px;
   background: white;
+  overflow: auto;
 }
 
 .text-updater-node label {
   display: block;
   color: #111;
   font-size: 12px;
+}
+
+.const-node{
+  height: auto;
+  border: 1px solid #111;
+  padding: 10px;
+  background: white;
 }

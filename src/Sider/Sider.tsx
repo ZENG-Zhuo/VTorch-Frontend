@@ -1,11 +1,27 @@
 import React, {useState} from 'react';
-import Sidernodes from './SiderNodes'
+// import Sidernodes from './SiderNodes'
 import classnames from 'classnames';
-import './Sider.css'
+import './Sider.css';
+// import {Scrollbars} from 'react-custom-scrollbars';
 import { useStore } from 'reactflow';
-import {InputTensor, OutputTensor, Conv2D, AvgPool2d, BatchNorm2D, Conv1D, classdict} from '../Canvas/LayerNode'
+import {InputTensor, OutputTensor, classdict} from '../Canvas/LayerNode'
+import { ClassInfo } from '../ParsePythonFuncClass';
 
-function Sider() {
+
+interface SiderProp{
+  modules : ClassInfo[];
+};
+
+function Sider(props: SiderProp) {
+  let modules = props.modules;
+  const sidernodes = [
+    { type: 'Input', data: { label: 'input tensor' } },
+    { type: 'Output', data: { label: 'output tensor' } },
+    ...modules.map(classInfo => ({
+      type: classInfo.name,
+      data: { label: classInfo.name }
+    }))
+  ];
   const onDragStart = (event: any, nodeType: any) => {
     console.log("output the nodetype");
     console.log(nodeType);
@@ -47,9 +63,10 @@ function Sider() {
 
   return (
     <div className='sider'>
+      
       <span className='sider_title'> Layer Choice </ span>
       <div className="nodes">
-          {Sidernodes?.map((x) => (
+          {sidernodes?.map((x) => (
             <div
               key = {x.data.label}
               className={classnames(["sider-node", x.data.label])}

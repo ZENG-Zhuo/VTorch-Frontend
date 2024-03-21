@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
-import { Handle, Position, useNodeId } from 'reactflow';
+import { ComponentType, useCallback } from 'react';
+import { Handle, NodeProps, Position, useNodeId } from 'reactflow';
+import { ClassInfo } from '../ParsePythonFuncClass';
 
 // function InputTensor() {
 //   return (
@@ -177,7 +178,7 @@ function InputTensor() {
   }
 
   return (
-    <div className="text-updater-node">
+    <div className="const-node">
       <span className='Input Tensor'>Input Tensor</span>
       {/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
       <Handle type="source" position={Position.Right} id="b" isConnectable={true} />
@@ -195,7 +196,7 @@ function OutputTensor() {
   }
 
   return (
-    <div className="text-updater-node">
+    <div className="const-node">
       <Handle type="target" position={Position.Left} id="b" isConnectable={true} />
       <span className='Output Tensor'>Output Tensor</span>
       {/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
@@ -267,6 +268,22 @@ function Conv2D() {
   return NNmoduleToDiv(module);
 }
 
+function generateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
+  const initFunc = classInfo.functions.find(func => func.name === '__init__');
+  if (!initFunc) {
+    throw new Error(`__init__ function not found in ClassInfo`);
+  }
+
+  const params = initFunc.parameters.map(param => new Param(param.name, param.type_hint?.toString()));
+
+  const moduleName = classInfo.name;
+
+  return function() {
+    const module = new Module(params, moduleName);
+    return NNmoduleToDiv(module);
+  };
+}
 
 
-export {InputTensor, OutputTensor, Conv2D, AvgPool2d, BatchNorm2D, Conv1D, classdict};
+
+export {InputTensor, OutputTensor, classdict, generateModuleFunction};

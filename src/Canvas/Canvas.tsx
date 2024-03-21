@@ -1,61 +1,75 @@
-import { useCallback, useRef, useState } from 'react';
-import ReactFlow, { Background, BackgroundVariant, addEdge, applyEdgeChanges, applyNodeChanges, Controls } from 'reactflow';
-import 'reactflow/dist/style.css';
+import { ComponentType, useCallback, useRef, useState } from "react";
+import ReactFlow, {
+  Background,
+  BackgroundVariant,
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  Controls,
+  NodeProps,
+} from "reactflow";
+import "reactflow/dist/style.css";
 
-import {InputTensor, OutputTensor, Conv2D, AvgPool2d, BatchNorm2D, Conv1D} from './LayerNode';
-
-import './Canvas.css';
-import { initialNodes,initialEdges } from './defaultelements';
+import { InputTensor, OutputTensor, generateModuleFunction } from "./LayerNode";
 import { FloatButton} from 'antd';
 import {LeftOutlined} from '@ant-design/icons'
-
-
+import "./Canvas.css";
+import { initialNodes, initialEdges } from "./defaultelements";
+import { ClassInfo } from "../ParsePythonFuncClass";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
-const nodeTypes = { 
+let nodeTypes: { [key: string]: ComponentType<NodeProps> } = {
   Input: InputTensor,
   Output: OutputTensor,
-  conv2dUpdater: Conv2D, 
-  poolUpdater: AvgPool2d,
-  BatchNormUpdater: BatchNorm2D,
-  conv1dUpdater: Conv1D
 };
 
 let id = initialNodes.length;
 const getId = () => `node${++id}`;
 
-function Canvas() {
+interface CanvasProp {
+  modules: ClassInfo[];
+}
+
+function Canvas(props: CanvasProp) {
   const reactFlowWrapper = useRef<HTMLInputElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
 
+  props.modules.forEach((classInfo) => {
+    const moduleFunction = generateModuleFunction(classInfo);
+    nodeTypes[classInfo.name] = moduleFunction;
+  });
+
   // console.log(reactFlowInstance);
 
   const onNodesChange = useCallback(
-    (changes: any) => setNodes((nds: any): any => applyNodeChanges(changes, nds)),
+    (changes: any) =>
+      setNodes((nds: any): any => applyNodeChanges(changes, nds)),
     [setNodes]
   );
   const onEdgesChange = useCallback(
-    (changes: any) => setEdges((eds: any): any => applyEdgeChanges(changes, eds)),
+    (changes: any) =>
+      setEdges((eds: any): any => applyEdgeChanges(changes, eds)),
     [setEdges]
   );
 
   const onDragOver = useCallback((event: any) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
     (event: any) => {
       event.preventDefault();
-      
-      const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
-      const type = event.dataTransfer.getData('application/reactflow');
+
+      const reactFlowBounds =
+        reactFlowWrapper?.current?.getBoundingClientRect();
+      const type = event.dataTransfer.getData("application/reactflow");
 
       // check if the dropped element is valid
-      if (typeof type === 'undefined' || !type) {
+      if (typeof type === "undefined" || !type) {
         return;
       }
 
@@ -75,27 +89,24 @@ function Canvas() {
     [reactFlowInstance]
   );
 
-  const onConnect = useCallback(
-    (connection: any): any => {
-      const { source, target } = connection;
-      let src_num: any = source.slice(4);
-      let tag_num: any = target.slice(4);
+  const onConnect = useCallback((connection: any): any => {
+    const { source, target } = connection;
+    let src_num: any = source.slice(4);
+    let tag_num: any = target.slice(4);
 
-      const newEdge: any = {
-        id: `edge${src_num}-${tag_num}`,
-        source,
-        target,
-        // type: 'customEdge',
-        style: { strokeWidth: 3 },
-      };
-      setEdges((prevElements: any):any => addEdge(newEdge, prevElements));
-    },[]
-  );
+    const newEdge: any = {
+      id: `edge${src_num}-${tag_num}`,
+      source,
+      target,
+      // type: 'customEdge',
+      style: { strokeWidth: 3 },
+    };
+    setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
+  }, []);
 
   return (
-    <div className='canvas' ref={reactFlowWrapper} >
+    <div className="canvas" ref={reactFlowWrapper}>
       <ReactFlow
-        
         edges={edges}
         nodes={nodes}
         onNodesChange={onNodesChange}
@@ -107,9 +118,9 @@ function Canvas() {
         onDragOver={onDragOver}
         fitView
       >
-      <Controls position='top-right'/>
-      <Background  variant={BackgroundVariant.Lines}/>
-      <FloatButton href='/' icon={<LeftOutlined/> } />
+        <Controls position="top-right" />
+        <Background variant={BackgroundVariant.Lines} />
+        <FloatButton href='/' icon={<LeftOutlined/> } />
       </ReactFlow>
     </div>
   );

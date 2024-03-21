@@ -1,6 +1,10 @@
 .nodes {
     margin-bottom: 20px;
 }
+
+.sider {
+  overflow: scroll;
+}
   
 .sider-node {
   font-size: 14px;

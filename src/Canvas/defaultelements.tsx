@@ -9,29 +9,29 @@ const initialNodes: Node[] = [
       
     },
     { id: 'node2', 
-      type: 'conv2dUpdater', 
+      type: 'Conv2d', 
       data: {},
-      position: { x: 0, y: -100 }
+      position: { x: 0, y: -200 }
     },
     { id: 'node3', 
-      type: 'conv2dUpdater', 
+      type: 'Conv2d', 
       data: {},
-      position: { x: 0, y: 200 }
+      position: { x: 0, y: 400 }
     },
     { id: 'node4', 
-      type: 'conv2dUpdater', 
+      type: 'Conv2d', 
       data: {},
-      position: { x: 300, y: -100 }
+      position: { x: 300, y: -200 }
     },
     {
       id: 'node5',
-      type: 'poolUpdater',
+      type: 'AvgPool2d',
       data: {},
       position: { x: 600, y: 0 }
     },
     {
       id: 'node6',
-      type: 'BatchNormUpdater',
+      type: 'ReLU',
       data: {},
       position: { x: 900, y: 0 }
     },
