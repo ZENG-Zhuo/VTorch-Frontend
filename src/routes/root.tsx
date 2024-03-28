@@ -17,7 +17,7 @@ export default function Root() {
   const [alignItems, setAlignItems] = React.useState<FlexProps['align']>(alignOptions[0]);
 
   function gotoModel(){
-    window.location.assign("/modelpage"); 
+    window.location.assign("/LoginPage"); 
   } 
 
 
@@ -25,20 +25,19 @@ export default function Root() {
     <div className='contain'>
       <div className="title">
         <h1 className='welcome'> Welcome to </h1>
-        <br/><br/><br/><br/><br/><br/><br/>
+        <br/><br/>
         <img src='./VTorch.jpg' alt="VtorchLogo" width="800" />
       </div>
       <br/>
       <div className='txtarea'>
         <div> VTorch: a graph-based visual interface for constructing a machine learning program with torch</div>
         <br/>
-        <div> Try this Through the Button below </div>
+        <div> Let's start through the button below </div>
       </div>
+      <br/><br/>
       <div className='buttons'>
         <Flex justify={justify} gap="large" align={alignItems} wrap="wrap">
-          <Button size='large' type='primary'>DataLoader</Button>
-          <Button size='large' type='primary'  onClick={gotoModel} >Model Building</Button>
-          <Button size='large' type='primary'>Loss and Optimizer</Button>
+          <Button size='large' type='primary' href='/LoginPage' >Login in or register here</Button>
         </Flex>
       </div>
     </div>

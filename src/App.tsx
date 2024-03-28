@@ -6,6 +6,8 @@ import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./ParsePythonModule";
 import { ClassInfo } from "./ParsePythonFuncClass";
 import { jsonContent } from "./data";
+
+
 function extractClassBaseModule(
   node: FolderModuleNode | FileModuleNode
 ): ClassInfo[] {

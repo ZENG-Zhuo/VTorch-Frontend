@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -21,6 +22,9 @@ import {
 
 import Root from "./routes/root";
 import ErrorPage from "./routes/error-page";
+import LoginPage from './routes/Login/LoginPage';
+import RegisterPage from './routes/Login/RegisterPage';
+import HomePage from './routes/HomePage/HomePage.jsx'
 
 const router = createBrowserRouter([
   {
@@ -29,8 +33,23 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />
   },
   {
+    path: "/HomePage",
+    element: <HomePage key="page2" isMobile={false}/>,
+    errorElement: <ErrorPage />
+  },
+  {
     path: "/modelpage",
     element: <App />,
+    errorElement: <ErrorPage />
+  },
+  {
+    path: "/LoginPage",
+    element: <LoginPage />,
+    errorElement: <ErrorPage />
+  },
+  {
+    path: '/RegisterPage',
+    element: <RegisterPage />,
     errorElement: <ErrorPage />
   }
 ]);
