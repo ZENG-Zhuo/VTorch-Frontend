@@ -1,0 +1,14 @@
+.container {
+    width: auto;
+    height: 100%;
+    text-align: center;
+}
+
+
+.logo{
+    width: 500px;
+}
+
+.page{
+    margin-top: 10%;
+}

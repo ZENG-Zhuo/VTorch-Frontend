@@ -1,8 +1,7 @@
 import React from 'react';
 import { enquireScreen } from 'enquire-js';
 import Page2 from './Page';
-import './static/style.js';
-
+import './HomePage.css'
 
 let isMobile = false;
 enquireScreen((b) => {
@@ -28,7 +27,11 @@ class HomePage extends React.PureComponent {
   }
   render() {
     return (
-      <Page2 key="page2" isMobile={false} />
+      <div className='container'>
+        <img className='logo' src='VTorch.jpg' />
+        
+        <Page2 className='page' key="page2" isMobile={false} />
+      </div>
     );
   }
 }
