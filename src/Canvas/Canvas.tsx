@@ -7,6 +7,7 @@ import ReactFlow, {
   applyNodeChanges,
   Controls,
   NodeProps,
+  MarkerType,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
@@ -82,6 +83,7 @@ function Canvas(props: CanvasProp) {
         type,
         position,
         data: { label: `${type} node` },
+        
       };
 
       setNodes((nds: any) => nds.concat(newNode));
@@ -100,6 +102,9 @@ function Canvas(props: CanvasProp) {
       target,
       // type: 'customEdge',
       style: { strokeWidth: 3 },
+      markerEnd:{
+        type: MarkerType.ArrowClosed,
+      }
     };
     setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
   }, []);
@@ -119,7 +124,20 @@ function Canvas(props: CanvasProp) {
         fitView
       >
         <Controls position="top-right" />
-        <Background variant={BackgroundVariant.Lines} />
+        {/* <Background variant={BackgroundVariant.Lines} size={1}/> */}
+        <Background
+          id="1"
+          gap={10}
+          color="#f1f1f1"
+          variant={BackgroundVariant.Lines}
+        />
+
+        <Background
+          id="2"
+          gap={100}
+          color="#ccc"
+          variant={BackgroundVariant.Lines}
+        />
         <FloatButton href='/' icon={<LeftOutlined/> } />
       </ReactFlow>
     </div>

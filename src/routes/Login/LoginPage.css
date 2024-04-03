@@ -1,10 +1,41 @@
+/* body{
+    background: url('./LoginBack.png');
+    background-size: 100%;
+    background-attachment: fixed;
+    background-position-y: center;
+
+} */
+.LoginPage{
+  background-image: url("LoginBack.png");
+  background-size: 100%;
+  height: 100%;
+  /* background-color: red; */
+}
+
+.FormContainer{
+    position: fixed;
+    background-color: white;
+    width: 25%;
+    margin-left: 70%;
+    margin-top: 10%;
+    /* margin:auto; */
+    height: auto;
+    text-align: center;
+    flex-direction: column;
+    align-items: center ;
+}
+
 .title{
-    font-size: 50px;
+    font-size: 10px;
     font-weight: bold;
+    margin-top: 15%;
 }
 
 
 .LoginForm {
     margin-top: 10%;
     margin-left: 10%;
+    margin-right: 15%;
+    margin-bottom: 15%;
+    align-items: center;
 }
