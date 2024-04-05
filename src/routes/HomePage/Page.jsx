@@ -14,20 +14,20 @@ const pageData = [
     title: 'DataLoader Design',
     content: 'Design your dataloader to transform the row data into tensor',
     links: [
-      <a key="2" href="https://pro.ant.design" target="_blank">Design DataLoader<Icon type="right" /></a>,
+      <a key="2" href="/modelPage">Design DataLoader<Icon type="right" /></a>,
     ],
     Bg: Tetris,
   },
   {
     title: 'Model Design',
     content: 'Design your model for training',
-    links: (<a href="https://antv.alipay.com" target="_blank">Design your model<Icon type="right" /></a>),
+    links: (<a href="/modelPage">Design your model<Icon type="right" /></a>),
     Bg: Column,
   },
   {
     title: 'Loss Design',
     content: 'Design your loss function to optimize the model',
-    links: (<a>Design your Loss Function</a>),
+    links: (<a href="/modelPage">Design your Loss Function<Icon type="right" /></a>),
     Bg: Coordinate,
   },
 ];

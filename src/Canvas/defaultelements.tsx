@@ -16,7 +16,7 @@ const initialNodes: Node[] = [
     { id: 'node3', 
       type: 'Conv2d', 
       data: {},
-      position: { x: 0, y: 400 }
+      position: { x: 0, y: 600 }
     },
     { id: 'node4', 
       type: 'Conv2d', 

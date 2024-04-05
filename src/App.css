@@ -10,7 +10,7 @@
 
 .sider {
   float: left;
-  width: 240px;
+  width: 300px;
   height: 100%;
   background-color: white;
   border-right:1px solid;
@@ -27,6 +27,6 @@
 
 .canvas {
   background-color: pink;
-  margin-left: 241px;
+  margin-left: 301px;
   height: 100%;
 }
