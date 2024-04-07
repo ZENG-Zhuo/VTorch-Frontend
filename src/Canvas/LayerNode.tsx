@@ -1,6 +1,7 @@
 import { ComponentType, useCallback } from 'react';
-import { Handle, NodeProps, Position, useNodeId } from 'reactflow';
+import { Background, Handle, NodeProps, Position, useNodeId } from 'reactflow';
 import { ClassInfo } from '../ParsePythonFuncClass';
+import internal from 'stream';
 
 // function InputTensor() {
 //   return (
@@ -143,17 +144,26 @@ class Module {
   }
 }
 
-function ParamInput(name: any, type: any, param: any) {
+function ParamInput(name: any, type: any, param: any, key: any) {
   const onChange = useCallback((evt: any) => {
     console.log(evt.target.value);
     param.value = evt.target.value;
   }, []);
 
+  const onConnect = useCallback((evt: any) => {
+    console.log(evt.target)
+  },[])
+
+  let id_name:string = name as string
+  let id_key:string = key as string 
+
   return (
     <div key={name}>
       <span>{name}</span> <br />
       <input name="text" onChange={onChange} className="nodrag" />
+      <Handle type="target"  id={id_name+id_key} position={Position.Left} style={{top:(46*key+85)}} onConnect={onConnect} isConnectable={true} />
     </div>
+    
   )
 }
 
@@ -181,7 +191,7 @@ function InputTensor() {
     <div className="const-node">
       <span className='Input Tensor'>Input Tensor</span>
       {/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
-      <Handle type="source" position={Position.Right} id="b" isConnectable={true} />
+      <Handle type="source" position={Position.Right} style={{background:"#ff0"}}  id="b" isConnectable={true} />
     </div>
   );
 }
@@ -197,7 +207,7 @@ function OutputTensor() {
 
   return (
     <div className="const-node">
-      <Handle type="target" position={Position.Left} id="b" isConnectable={true} />
+      <Handle type="target" position={Position.Left} style={{background:"#0ff"}} id="b" isConnectable={true} />
       <span className='Output Tensor'>Output Tensor</span>
       {/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
     </div>
@@ -219,54 +229,27 @@ function NNmoduleToDiv(module: any) {
 
   return (
     <div className="text-updater-node">
-      <Handle type="target" position={Position.Left} isConnectable={true} />
+      <Handle type="target" position={Position.Left} style={{top:10, background:'#00ffff'}} isConnectable={true} />
       <span className='conv2d-title'>{moduleName}</span>
       <br/>
       <span>{nodeid}</span>
       <br />
-      {classdict[nodeid].params.map((param: any) => ParamInput(param.name, param.type,param))}
-      <Handle type="source" position={Position.Right} id="b" isConnectable={true} />
+      {classdict[nodeid].params.map((param: any, key: any) => ParamInput(param.name, param.type,param, key))}
+      <Handle type="source" position={Position.Right} style={{top:10, background:'#ffff00'}} isConnectable={true} />
     </div>
   )
 }
 
 
 
-function BatchNorm2D() {
-  let param1 = new Param("num_feature", "int");
-  let param2 = new Param("eps", "float");
-  let param3 = new Param("momentum", "float");
-  let module = new Module([param1, param2, param3], "BatchNorm2D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function Conv1D() {
-
-  let param1 = new Param("in_channel", "int");
-  let param2 = new Param("out_channel", "int")
-  let module = new Module([param1, param2], "Conv1D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function AvgPool2d() {
-  let param1 = new Param("Kernel_size", "int");
-  let param2 = new Param("stride", "int");
-  let module = new Module([param1, param2], "AvgPool2d");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function Conv2D() {
-  let param1 = new Param("in_channel", "int");
-  let param2 = new Param("out_channel", "int");
-  let param3 = new Param("kernel_size", "int");
-  let param4 = new Param("stride", "int")
-  let module = new Module([param1, param2, param3, param4], "Conv2D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
+// function BatchNorm2D() {
+//   let param1 = new Param("num_feature", "int");
+//   let param2 = new Param("eps", "float");
+//   let param3 = new Param("momentum", "float");
+//   let module = new Module([param1, param2, param3], "BatchNorm2D");
+//   // console.log(module.params);
+//   return NNmoduleToDiv(module);
+// }
 
 function generateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
   const initFunc = classInfo.functions.find(func => func.name === '__init__');

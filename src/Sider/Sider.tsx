@@ -19,9 +19,11 @@ interface SiderProp{
 
 function Sider(props: SiderProp) {
   let modules = props.modules;
-  const sidernodes = [
+  const BasicNodes = [
     { type: 'Input', data: { label: 'input tensor' } },
     { type: 'Output', data: { label: 'output tensor' } },
+  ]
+  const NnNodes = [
     ...modules.map(classInfo => ({
       type: classInfo.name,
       data: { label: classInfo.name }
@@ -36,6 +38,12 @@ function Sider(props: SiderProp) {
 
   const edges = useStore(state => state.edges);
   const state = useStore((state) => state);
+
+  function LogOutInfo(){
+    let nodes: any = classdict
+    console.log(nodes)
+    console.log(edges)
+  }
 
   function OnClickButton(){
     let nodes: any = classdict
@@ -70,15 +78,31 @@ function Sider(props: SiderProp) {
     <div className='sider'>
       
       <span className='sider_title'> Layer Choice </ span>
-      <button  className="save"  onClick={OnClickButton}>show the state</button>
+      <button  className="save"  onClick={LogOutInfo}>show the state</button>
 
       <Sidenav>
       <Sidenav.Body>
       
       <Nav>
-      <Nav.Menu placement="rightStart" eventKey="3" title="NNModule" icon={<MagicIcon />}>
+      <Nav.Menu  key="Basic" placement="rightStart" title="BasicNodes" icon={<MagicIcon />}>
+        <div className="nodes">
+            {BasicNodes?.map((x) => (
+              <Nav.Item >
+              <div
+                key = {x.data.label}
+                className={classnames(["sider-node", x.data.label])}
+                onDragStart={(event: any) => onDragStart(event, x.type)}
+                draggable
+              >
+                {x.data.label}
+              </div>
+              </Nav.Item>
+            ))}
+        </div>
+      </Nav.Menu>
+      <Nav.Menu key="NN" placement="rightStart" title="NNModule" icon={<MagicIcon />}>
       <div className="nodes">
-          {sidernodes?.map((x) => (
+          {NnNodes?.map((x) => (
             <Nav.Item >
             <div
               key = {x.data.label}

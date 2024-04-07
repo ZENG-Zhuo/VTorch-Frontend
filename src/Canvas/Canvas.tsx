@@ -11,7 +11,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-import { InputTensor, OutputTensor, generateModuleFunction } from "./LayerNode";
+import { InputTensor, OutputTensor, classdict , generateModuleFunction} from "./LayerNode";
 import { FloatButton} from 'antd';
 import {LeftOutlined} from '@ant-design/icons'
 import "./Canvas.css";
@@ -92,6 +92,7 @@ function Canvas(props: CanvasProp) {
   );
 
   const onConnect = useCallback((connection: any): any => {
+    console.log(connection)
     const { source, target } = connection;
     let src_num: any = source.slice(4);
     let tag_num: any = target.slice(4);
@@ -106,7 +107,7 @@ function Canvas(props: CanvasProp) {
         type: MarkerType.ArrowClosed,
       }
     };
-    setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
+    setEdges((prevElements: any): any => addEdge(connection, prevElements));
   }, []);
 
   return (
