@@ -215,9 +215,9 @@ async function readFileContent(fileName: string) {
 
 export default function App() {
     console.log(jsonContent);
-    let tree = FolderModuleNode.fromJSON(jsonContent);
+    // let tree = FolderModuleNode.fromJSON(jsonContent);
     const [parsedClassesWithInit, setParsedClasses] = useState<ClassInfo[] | undefined>([]);
-    let parsedClasses = extractClassBaseModule(tree);
+    // let parsedClasses = extractClassBaseModule(tree);
     //  parsedClassesWithInit = parsedClasses.filter((classInfo: ClassInfo) => {
     //     // console.log(classInfo.name);
     //     if (allClasses.includes(classInfo.name)) {
