@@ -92,22 +92,35 @@ function Canvas(props: CanvasProp) {
   );
 
   const onConnect = useCallback((connection: any): any => {
-    console.log(connection)
-    const { source, target } = connection;
+    // console.log(connection)
+    const { source,sourceHandle ,target, targetHandle } = connection;
     let src_num: any = source.slice(4);
     let tag_num: any = target.slice(4);
 
+    console.log(targetHandle.substring(targetHandle.length-3,targetHandle.length))
+
+    let edge_id:string;
+
+    if(targetHandle.substring(targetHandle.length-3,targetHandle.length) == 'put'){
+      edge_id = `edge${src_num}-${tag_num}_flow`
+    } else {
+      let key_id:string = targetHandle.substring(targetHandle.length-1,targetHandle.length)
+      edge_id = `edge${src_num}-${tag_num}_data_${key_id}`
+    }
+
     const newEdge: any = {
-      id: `edge${src_num}-${tag_num}`,
+      id: edge_id,
       source,
+      sourceHandle,
       target,
+      targetHandle,
       // type: 'customEdge',
       style: { strokeWidth: 3 },
       markerEnd:{
         type: MarkerType.ArrowClosed,
       }
     };
-    setEdges((prevElements: any): any => addEdge(connection, prevElements));
+    setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
   }, []);
 
   return (

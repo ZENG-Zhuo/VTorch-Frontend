@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import classnames from 'classnames';
 import './Sider.css';
 // import {Scrollbars} from 'react-custom-scrollbars';
-import { useStore } from 'reactflow';
+import { useStore, useReactFlow } from 'reactflow';
 import {InputTensor, OutputTensor, classdict} from '../Canvas/LayerNode'
 import { ClassInfo } from '../ParsePythonFuncClass';
 import { Sidenav, Nav, Toggle } from 'rsuite';
@@ -37,12 +37,13 @@ function Sider(props: SiderProp) {
   };  
 
   const edges = useStore(state => state.edges);
-  const state = useStore((state) => state);
+  const reactflow = useReactFlow()
 
   function LogOutInfo(){
-    let nodes: any = classdict
-    console.log(nodes)
-    console.log(edges)
+    // let nodes: any = classdict
+    // console.log(nodes)
+    // console.log(edges)
+    console.log(reactflow.getNodes())
   }
 
   function OnClickButton(){

@@ -6,6 +6,11 @@
   background: white;
 }
 
+.text-updater-node Handle {
+  width: 20px;
+  height: 20px;
+}
+
 .text-updater-node label {
   display: block;
   color: #111;

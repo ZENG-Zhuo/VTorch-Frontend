@@ -45,13 +45,13 @@ const initialNodes: Node[] = [
   
   
   const initialEdges = [
-    { id: 'edge1-2', source: 'node1', target: 'node2',style: { strokeWidth: 3 }},
-    { id: 'edge2-4', source: 'node2', target: 'node4',style: { strokeWidth: 3 }},
-    { id: 'edge1-3', source: 'node1', target: 'node3',style: { strokeWidth: 3 }},
-    { id: 'edge4-5', source: 'node4', target: 'node5',style: { strokeWidth: 3 }},
-    { id: 'edge3-5', source: 'node3', target: 'node5',style: { strokeWidth: 3 }},
-    { id: 'edge5-6', source: 'node5', target: 'node6',style: { strokeWidth: 3 }},
-    { id: 'edge6-7', source: 'node6', target: 'node7',style: { strokeWidth: 3 }},
+    { id: 'edge1-2_flow', source: 'node1', target: 'node2',style: { strokeWidth: 3 }},
+    { id: 'edge2-4_flow', source: 'node2', target: 'node4',style: { strokeWidth: 3 }},
+    { id: 'edge1-3_flow', source: 'node1', target: 'node3',style: { strokeWidth: 3 }},
+    { id: 'edge4-5_flow', source: 'node4', target: 'node5',style: { strokeWidth: 3 }},
+    { id: 'edge3-5_flow', source: 'node3', target: 'node5',style: { strokeWidth: 3 }},
+    { id: 'edge5-6_flow', source: 'node5', target: 'node6',style: { strokeWidth: 3 }},
+    { id: 'edge6-7_flow', source: 'node6', target: 'node7',style: { strokeWidth: 3 }},
   ];
 
   export {initialNodes, initialEdges};
