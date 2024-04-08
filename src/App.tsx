@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
 import Canvas from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
@@ -216,16 +216,17 @@ async function readFileContent(fileName: string) {
 export default function App() {
     console.log(jsonContent);
     let tree = FolderModuleNode.fromJSON(jsonContent);
+    const [parsedClassesWithInit, setParsedClasses] = useState<ClassInfo[] | undefined>([]);
     let parsedClasses = extractClassBaseModule(tree);
-    let parsedClassesWithInit = parsedClasses.filter((classInfo: ClassInfo) => {
-        // console.log(classInfo.name);
-        if (allClasses.includes(classInfo.name)) {
-            let initFunc = classInfo.functions.find(
-                (funcInfo) => funcInfo.name == "__init__"
-            );
-            return initFunc != undefined;
-        }
-    });
+    //  parsedClassesWithInit = parsedClasses.filter((classInfo: ClassInfo) => {
+    //     // console.log(classInfo.name);
+    //     if (allClasses.includes(classInfo.name)) {
+    //         let initFunc = classInfo.functions.find(
+    //             (funcInfo) => funcInfo.name == "__init__"
+    //         );
+    //         return initFunc != undefined;
+    //     }
+    // });
     return (
         <div className="container">
             <ReactFlowProvider>

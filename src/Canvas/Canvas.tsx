@@ -16,7 +16,7 @@ import { FloatButton} from 'antd';
 import {LeftOutlined} from '@ant-design/icons'
 import "./Canvas.css";
 import { initialNodes, initialEdges } from "./defaultelements";
-import { ClassInfo } from "../ParsePythonFuncClass";
+import { ClassInfo } from "../common/pythonObjectTypes";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
@@ -29,7 +29,7 @@ let id = initialNodes.length;
 const getId = () => `node${++id}`;
 
 interface CanvasProp {
-  modules: ClassInfo[];
+  modules: ClassInfo[] | undefined;
 }
 
 function Canvas(props: CanvasProp) {
@@ -37,6 +37,9 @@ function Canvas(props: CanvasProp) {
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
+  if (!props.modules){
+    throw "Module undefined!";
+  }
 
   props.modules.forEach((classInfo) => {
     const moduleFunction = generateModuleFunction(classInfo);

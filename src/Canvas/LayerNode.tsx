@@ -1,6 +1,6 @@
 import { ComponentType, useCallback } from 'react';
 import { Handle, NodeProps, Position, useNodeId } from 'reactflow';
-import { ClassInfo } from '../ParsePythonFuncClass';
+import { ClassInfo } from '../common/pythonObjectTypes';
 
 // function InputTensor() {
 //   return (

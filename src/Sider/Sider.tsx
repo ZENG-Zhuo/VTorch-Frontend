@@ -5,7 +5,7 @@ import './Sider.css';
 // import {Scrollbars} from 'react-custom-scrollbars';
 import { useStore } from 'reactflow';
 import {InputTensor, OutputTensor, classdict} from '../Canvas/LayerNode'
-import { ClassInfo } from '../ParsePythonFuncClass';
+import { ClassInfo } from '../common/pythonObjectTypes';
 import { Sidenav, Nav, Toggle } from 'rsuite';
 import DashboardIcon from '@rsuite/icons/legacy/Dashboard';
 import GroupIcon from '@rsuite/icons/legacy/Group';
@@ -14,11 +14,14 @@ import GearCircleIcon from '@rsuite/icons/legacy/GearCircle';
 
 
 interface SiderProp{
-  modules : ClassInfo[];
+  modules : ClassInfo[] | undefined;
 };
 
 function Sider(props: SiderProp) {
   let modules = props.modules;
+  if (!modules){
+    throw "module undefined unhandled!"
+  }
   const sidernodes = [
     { type: 'Input', data: { label: 'input tensor' } },
     { type: 'Output', data: { label: 'output tensor' } },
