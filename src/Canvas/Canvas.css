@@ -1,14 +1,15 @@
 .text-updater-node {
   height: auto;
+  width: 200px;
   border: 1px solid #111;
   padding: 10px;
   border-radius: 10px;
   background: white;
 }
 
-.text-updater-node Handle {
-  width: 20px;
-  height: 20px;
+.handle {
+  width: 15px;
+  height: 15px;
 }
 
 .text-updater-node label {

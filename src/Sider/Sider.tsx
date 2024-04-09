@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import './Sider.css';
 // import {Scrollbars} from 'react-custom-scrollbars';
 import { useStore, useReactFlow } from 'reactflow';
-import {InputTensor, OutputTensor, classdict} from '../Canvas/LayerNode'
+import {InputTensor, OutputTensor, GetClassDict} from '../Canvas/LayerNode'
 import { ClassInfo } from '../ParsePythonFuncClass';
 import { Sidenav, Nav, Toggle } from 'rsuite';
 import DashboardIcon from '@rsuite/icons/legacy/Dashboard';
@@ -47,7 +47,7 @@ function Sider(props: SiderProp) {
   }
 
   function OnClickButton(){
-    let nodes: any = classdict
+    let nodes: any = GetClassDict()
 
     for(let key in nodes){
       if(String(nodes[key].name) == "input"){
@@ -79,7 +79,7 @@ function Sider(props: SiderProp) {
     <div className='sider'>
       
       <span className='sider_title'> Layer Choice </ span>
-      <button  className="save"  onClick={LogOutInfo}>show the state</button>
+      <button  className="save"  onClick={OnClickButton}>show the state</button>
 
       <Sidenav>
       <Sidenav.Body>

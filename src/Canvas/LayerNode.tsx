@@ -2,6 +2,9 @@ import { ComponentType, useCallback } from 'react';
 import { Background, Handle, NodeProps, Position, useNodeId } from 'reactflow';
 import { ClassInfo } from '../ParsePythonFuncClass';
 import internal from 'stream';
+import type { CollapseProps } from 'antd';
+import { Collapse } from 'antd';
+
 
 class Param {
 	name;
@@ -41,7 +44,9 @@ function ParamInput(moduleName: any, nodeid: any, name: any, type: any, param: a
 
 	function onConnect(connection: any){
 		const {source, sourceHandle, target, targetHandle} = connection
+		param.value = source
 	}
+
 	// const onConnect = useCallback((evt: any) => {
 	//   console.log(evt)
 	// },[])
@@ -53,7 +58,7 @@ function ParamInput(moduleName: any, nodeid: any, name: any, type: any, param: a
 		<div key={name}>
 			<span>{name}</span> <br />
 			<input name="text" onChange={onChange} className="nodrag" />
-			<Handle type="target" onConnect={onConnect} id={moduleName + '_' + nodeid + '_' + id_name + '_' + id_key} position={Position.Left} style={{ top: (46 * key + 85) }} isConnectable={true} />
+			<Handle className="handle" type="target" onConnect={onConnect} id={moduleName + '-' + nodeid + '-' + id_name + '-' + id_key} position={Position.Left} style={{ top: (46 * key + 85) }} isConnectable={true} />
 		</div>
 
 	)
@@ -69,6 +74,10 @@ class ClassInstance {
 }
 
 let classdict: { [key: string]: ClassInstance } = {}
+
+function GetClassDict(){
+	return classdict;
+}
 
 function InputTensor() {
 	let nodeid = useNodeId()
@@ -88,7 +97,7 @@ function InputTensor() {
 		<div className="const-node">
 			<span className='Input Tensor'>Input Tensor</span>
 			{/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
-			<Handle type="source" position={Position.Right} style={{ background: "#ff0" }} id="input" isConnectable={true} onConnect={onConnect}/>
+			<Handle className="handle" type="source" position={Position.Right} style={{ background: "#ff0" }} id="input" isConnectable={true} onConnect={onConnect}/>
 		</div>
 	);
 }
@@ -108,7 +117,7 @@ function OutputTensor() {
 
 	return (
 		<div className="const-node">
-			<Handle type="target" position={Position.Left} style={{ background: "#0ff" }} id="output" isConnectable={true} onConnect={onConnect} />
+			<Handle className="handle" type="target" position={Position.Left} style={{ background: "#0ff" }} id="output" isConnectable={true} onConnect={onConnect} />
 			<span className='Output Tensor'>Output Tensor</span>
 			{/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
 		</div>
@@ -128,50 +137,57 @@ function NNmoduleToDiv(module: any) {
 		classdict[nodeid] = classInstance
 	}
 
-	function onConnect(connection: any){
-		const {source, sourceHandle, target, targetHandle} = connection
-	}
+
 
 	return (
-		<div className="text-updater-node">
-			<Handle type="target" onConnect={onConnect} position={Position.Left} id={moduleName + '_' + nodeid + '_input'} style={{ top: 10, background: '#00ffff' }} isConnectable={true} />
-			<span className='conv2d-title'>{moduleName}</span>
-			<br />
-			<span>{nodeid}</span>
-			<br />
+		<div>
 			{classdict[nodeid].params.map((param: any, key: any) => ParamInput(moduleName, nodeid, param.name, param.type, param, key))}
-			<Handle type="source" onConnect={onConnect} position={Position.Right} id={moduleName + '_' + nodeid + '_output'} style={{ top: 10, background: '#ffff00' }} isConnectable={true} />
 		</div>
 	)
 }
 
+function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
+	let nodeid = useNodeId()
 
-
-// function BatchNorm2D() {
-//   let param1 = new Param("num_feature", "int");
-//   let param2 = new Param("eps", "float");
-//   let param3 = new Param("momentum", "float");
-//   let module = new Module([param1, param2, param3], "BatchNorm2D");
-//   // console.log(module.params);
-//   return NNmoduleToDiv(module);
-// }
-
-function generateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
 	const initFunc = classInfo.functions.find(func => func.name === '__init__');
 	if (!initFunc) {
 		throw new Error(`__init__ function not found in ClassInfo`);
 	}
 
 	const params = initFunc.parameters.map(param => new Param(param.name, param.type_hint?.toString()));
+	
+	const moduleName:string = classInfo.name;
 
-	const moduleName = classInfo.name;
+	function onConnect(connection: any){
+		const {source, sourceHandle, target, targetHandle} = connection
+		if(targetHandle.substring(targetHandle.length-3,targetHandle.length) == 'put'){
+			return
+		} else {
+			let splitHandle:any = targetHandle.split('-')
+			let key:number = splitHandle[splitHandle.length-1]
+			// console.log(key)
+			// console.log(classdict[target].params[key])
+			classdict[target].params[key].value = source
+		}
+	}
 
 	return function () {
 		const module = new Module(params, moduleName);
-		return NNmoduleToDiv(module);
+		// return NNmoduleToDiv(module);
+		const item: CollapseProps['items'] = [
+			{
+				label: moduleName,
+				children: NNmoduleToDiv(module)
+			}
+		]
+		return <div className="text-updater-node">
+					<Handle className="handle" type="target" onConnect={onConnect} position={Position.Left} id={moduleName + '-' + nodeid + '-input'} style={{ top: 10, background: '#00ffff' }} isConnectable={true} />
+						<Collapse items={item}/>
+					<Handle className="handle" type="source" onConnect={onConnect} position={Position.Right} id={moduleName + '-' + nodeid + '-output'} style={{ top: 10, background: '#ffff00' }} isConnectable={true} />
+				</div>
 	};
 }
 
 
 
-export { InputTensor, OutputTensor, classdict, generateModuleFunction };
+export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction };
