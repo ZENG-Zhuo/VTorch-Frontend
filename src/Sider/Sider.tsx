@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import classnames from "classnames";
 import "./Sider.css";
 // import {Scrollbars} from 'react-custom-scrollbars';
-import { useStore } from "reactflow";
-import { InputTensor, OutputTensor, classdict } from "../Canvas/LayerNode";
+import { useStore, useReactFlow } from "reactflow";
+import { InputTensor, OutputTensor, GetClassDict } from "../Canvas/LayerNode";
 import { ClassInfo } from "../common/pythonObjectTypes";
 import { Sidenav, Nav, Toggle } from "rsuite";
 import DashboardIcon from "@rsuite/icons/legacy/Dashboard";
@@ -19,23 +19,18 @@ interface SiderProp {
 
 function Sider(props: SiderProp) {
     let modules = props.modules;
-    // if (!modules) {
-    //     return <div>
-    //         <h1>Module undefined</h1>
-    //     </div>
-    //     throw "module undefined unhandled!";
-    // }
-    const sidernodes = modules?[
-        { type: "Input", data: { label: "input tensor" } },
-        { type: "Output", data: { label: "output tensor" } },
-        ...Array.from(modules, (classNameAndInfo) => {
-            return { type: classNameAndInfo[0], data: { label: classNameAndInfo[0] } };
-        }),
-    ]:[
+    const BasicNodes = [ // need type def here
         { type: "Input", data: { label: "input tensor" } },
         { type: "Output", data: { label: "output tensor" } },
     ];
-    console.log("Siders: ", sidernodes);
+    let NnNodes:Array<any> = [];
+    if (modules)
+        NnNodes = Array.from(modules, (classNameAndInfo) => {
+            return {
+                type: classNameAndInfo[0],
+                data: { label: classNameAndInfo[0] },
+            };
+        });
     const onDragStart = (event: any, nodeType: any) => {
         console.log("output the nodetype");
         console.log(nodeType);
@@ -44,10 +39,17 @@ function Sider(props: SiderProp) {
     };
 
     const edges = useStore((state) => state.edges);
-    const state = useStore((state) => state);
+    const reactflow = useReactFlow();
+
+    function LogOutInfo() {
+        // let nodes: any = classdict
+        // console.log(nodes)
+        // console.log(edges)
+        console.log(reactflow.getNodes());
+    }
 
     function OnClickButton() {
-        let nodes: any = classdict;
+        let nodes: any = GetClassDict();
 
         for (let key in nodes) {
             if (String(nodes[key].name) == "input") {
@@ -85,13 +87,39 @@ function Sider(props: SiderProp) {
                 <Sidenav.Body>
                     <Nav>
                         <Nav.Menu
+                            key="Basic"
                             placement="rightStart"
-                            eventKey="3"
+                            title="BasicNodes"
+                            icon={<MagicIcon />}
+                        >
+                            <div className="nodes">
+                                {BasicNodes?.map((x) => (
+                                    <Nav.Item>
+                                        <div
+                                            key={x.data.label}
+                                            className={classnames([
+                                                "sider-node",
+                                                x.data.label,
+                                            ])}
+                                            onDragStart={(event: any) =>
+                                                onDragStart(event, x.type)
+                                            }
+                                            draggable
+                                        >
+                                            {x.data.label}
+                                        </div>
+                                    </Nav.Item>
+                                ))}
+                            </div>
+                        </Nav.Menu>
+                        <Nav.Menu
+                            key="NN"
+                            placement="rightStart"
                             title="NNModule"
                             icon={<MagicIcon />}
                         >
                             <div className="nodes">
-                                {sidernodes?.map((x) => (
+                                {NnNodes?.map((x) => (
                                     <Nav.Item>
                                         <div
                                             key={x.data.label}

@@ -45,13 +45,13 @@ const initialNodes: Node[] = [
   
   
   const initialEdges = [
-    { id: 'edge1-2', source: 'node1', target: 'node2',style: { strokeWidth: 3 }},
-    { id: 'edge2-4', source: 'node2', target: 'node4',style: { strokeWidth: 3 }},
-    { id: 'edge1-3', source: 'node1', target: 'node3',style: { strokeWidth: 3 }},
-    { id: 'edge4-5', source: 'node4', target: 'node5',style: { strokeWidth: 3 }},
-    { id: 'edge3-5', source: 'node3', target: 'node5',style: { strokeWidth: 3 }},
-    { id: 'edge5-6', source: 'node5', target: 'node6',style: { strokeWidth: 3 }},
-    { id: 'edge6-7', source: 'node6', target: 'node7',style: { strokeWidth: 3 }},
+    { id: 'edge1-2_flow', source: 'node1',sourceHandle:'input', target: 'node2', targetHandle:'Conv2d-node2-input' ,style: { strokeWidth: 3 }},
+    { id: 'edge2-4_flow', source: 'node2',sourceHandle:'Conv2d-node2-output', target: 'node4', targetHandle:'Conv2d-node4-input' ,style: { strokeWidth: 3 }},
+    { id: 'edge1-3_flow', source: 'node1',sourceHandle:'input', target: 'node3', targetHandle:'Conv2d-node3-input' ,style: { strokeWidth: 3 }},
+    { id: 'edge4-5_flow', source: 'node4',sourceHandle:'Conv2d-node4-output', target: 'node5',targetHandle:'AvgPool2d-node5-input', style: { strokeWidth: 3 }},
+    { id: 'edge3-5_flow', source: 'node3',sourceHandle:'Conv2d-node3-output', target: 'node5',targetHandle:'AvgPool2d-node5-input',style: { strokeWidth: 3 }},
+    { id: 'edge5-6_flow', source: 'node5',sourceHandle:'AvgPool2d-node5-output' ,target: 'node6',targetHandle:'ReLU-node6-input' ,style: { strokeWidth: 3 }},
+    { id: 'edge6-7_flow', source: 'node6', sourceHandle:"ReLU-node6-output", target: 'node7', targetHandle:"output", style: { strokeWidth: 3 }},
   ];
 
   export {initialNodes, initialEdges};
