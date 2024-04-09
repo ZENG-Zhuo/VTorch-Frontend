@@ -29,7 +29,7 @@ let id = initialNodes.length;
 const getId = () => `node${++id}`;
 
 interface CanvasProp {
-  modules: ClassInfo[] | undefined;
+  modules: Map<string, ClassInfo> | undefined;
 }
 
 function Canvas(props: CanvasProp) {
@@ -37,13 +37,17 @@ function Canvas(props: CanvasProp) {
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
-  if (!props.modules){
-    throw "Module undefined!";
-  }
-
-  props.modules.forEach((classInfo) => {
+  const modules = props.modules;
+  // if (!modules){
+  //   return <div>
+  //           <h1>Module undefined</h1>
+  //       </div>
+  //   throw "Module undefined!";
+  // }
+  if (modules)
+  modules.forEach((classInfo, alias) => {
     const moduleFunction = generateModuleFunction(classInfo);
-    nodeTypes[classInfo.name] = moduleFunction;
+    nodeTypes[alias] = moduleFunction;
   });
 
   // console.log(reactFlowInstance);

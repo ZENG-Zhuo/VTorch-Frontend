@@ -231,43 +231,6 @@ function NNmoduleToDiv(module: any) {
 }
 
 
-
-function BatchNorm2D() {
-  let param1 = new Param("num_feature", "int");
-  let param2 = new Param("eps", "float");
-  let param3 = new Param("momentum", "float");
-  let module = new Module([param1, param2, param3], "BatchNorm2D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function Conv1D() {
-
-  let param1 = new Param("in_channel", "int");
-  let param2 = new Param("out_channel", "int")
-  let module = new Module([param1, param2], "Conv1D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function AvgPool2d() {
-  let param1 = new Param("Kernel_size", "int");
-  let param2 = new Param("stride", "int");
-  let module = new Module([param1, param2], "AvgPool2d");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
-function Conv2D() {
-  let param1 = new Param("in_channel", "int");
-  let param2 = new Param("out_channel", "int");
-  let param3 = new Param("kernel_size", "int");
-  let param4 = new Param("stride", "int")
-  let module = new Module([param1, param2, param3, param4], "Conv2D");
-  // console.log(module.params);
-  return NNmoduleToDiv(module);
-}
-
 function generateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
   const initFunc = classInfo.functions.find(func => func.name === '__init__');
   if (!initFunc) {

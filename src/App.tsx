@@ -6,6 +6,9 @@ import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
 import { ClassInfo } from "./common/pythonObjectTypes";
 import { jsonContent } from "./data";
+import { updateDatabase } from "./dataCom";
+import { Database } from "./common/objectStorage";
+import { parse } from "path";
 
 function extractClassBaseModule(
     node: FolderModuleNode | FileModuleNode
@@ -215,18 +218,41 @@ async function readFileContent(fileName: string) {
 
 export default function App() {
     console.log(jsonContent);
-    // let tree = FolderModuleNode.fromJSON(jsonContent);
-    const [parsedClassesWithInit, setParsedClasses] = useState<ClassInfo[] | undefined>([]);
-    // let parsedClasses = extractClassBaseModule(tree);
-    //  parsedClassesWithInit = parsedClasses.filter((classInfo: ClassInfo) => {
-    //     // console.log(classInfo.name);
-    //     if (allClasses.includes(classInfo.name)) {
-    //         let initFunc = classInfo.functions.find(
-    //             (funcInfo) => funcInfo.name == "__init__"
-    //         );
-    //         return initFunc != undefined;
-    //     }
-    // });
+    const [parsedClassesWithInit, setParsedClasses] = useState<
+        Map<string, ClassInfo> | undefined
+    >(undefined);
+    if (!parsedClassesWithInit)
+        updateDatabase(() => {
+            const packageId = Database.findPackage("torch", "1.0.0");
+            if (packageId) {
+                const nodeId = Database.getPackage(packageId).getSubModule(
+                    ["torch", "nn"],
+                    false
+                );
+                if (nodeId) {
+                    const node = Database.getNode(nodeId);
+                    console.log("node: ", node);
+                    const importedClasses: Map<string, ClassInfo> = new Map();
+                    node.importedClasses.forEach((value, alias) => {
+                        const classInfo = Database.getNode(value[1]).getClass(
+                            value[0]
+                        );
+                        if (
+                            classInfo?.functions.find(
+                                (f) => f.name === "__init__"
+                            )
+                        )
+                            importedClasses.set(alias, classInfo);
+                    });
+                    node.classes.forEach((c) => {
+                        if (c.functions.find((f) => f.name === "__init__"))
+                            importedClasses.set(c.name, c);
+                    });
+                    setParsedClasses(importedClasses);
+                    console.log("imported: ", importedClasses);
+                } else throw "torch.nn not found";
+            } else throw "torch not found";
+        });
     return (
         <div className="container">
             <ReactFlowProvider>
