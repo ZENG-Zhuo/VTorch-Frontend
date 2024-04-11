@@ -1,6 +1,6 @@
 import { Database } from "./common/objectStorage";
 
-const backEndUrl = "http://localhost:8001";
+const backEndUrl = "http://10.89.2.170:8001";
 export function updateDatabase(callback: Function) {
     Database.clear();
     fetch(backEndUrl + "/api/getDatabase", {

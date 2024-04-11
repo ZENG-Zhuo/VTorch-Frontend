@@ -190,5 +190,13 @@ function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> 
 }
 
 
+function BatchNorm2D() {
+let param1 = new Param("num_feature", "int");
+let param2 = new Param("eps", "float");
+let param3 = new Param("momentum", "float");
+let module = new Module([param1, param2, param3], "BatchNorm2D");
+// console.log(module.params);
+return NNmoduleToDiv(module);
+}
 
-export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction };
+export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction, BatchNorm2D };
