@@ -16,6 +16,7 @@ import {
     OutputTensor,
     GetClassDict,
     GenerateModuleFunction,
+    BatchNorm2D
 } from "./LayerNode";
 import { FloatButton } from "antd";
 import { LeftOutlined } from "@ant-design/icons";
@@ -25,9 +26,10 @@ import { ClassInfo } from "../common/pythonObjectTypes";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
-let nodeTypes: { [key: string]: ComponentType<NodeProps> } = {
+let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
     Input: InputTensor,
     Output: OutputTensor,
+    // BatchNorm2D: BatchNorm2D
 };
 
 let id = initialNodes.length;
@@ -36,19 +38,29 @@ const getId = () => `node${++id}`;
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
 }
+let moduleChanged: boolean = false;
+export function setModuleChanged() {
+    moduleChanged = true;
+}
 
 function Canvas(props: CanvasProp) {
     const reactFlowWrapper = useRef<HTMLInputElement>(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
     const [nodes, setNodes] = useState(initialNodes);
     const [edges, setEdges] = useState(initialEdges);
+    // const [NodesTypes, setNodesTypes] = useState(initialNodeTypes);
 
     const modules = props.modules;
-    if (modules)
+    if (moduleChanged && modules) {
+        moduleChanged = false;
         modules.forEach((classInfo, name) => {
             const moduleFunction = GenerateModuleFunction(classInfo);
-            nodeTypes[name] = moduleFunction;
+            // let newNodes = { ...NodesTypes };
+            // newNodes[name] = moduleFunction;
+            NodesTypes[name] = moduleFunction;
+            // setNodesTypes(newNodes);
         });
+    }
 
     // console.log(reactFlowInstance);
 
@@ -103,9 +115,8 @@ function Canvas(props: CanvasProp) {
         let src_num: any = source.slice(4);
         let tag_num: any = target.slice(4);
 
-        console.log(
-            targetHandle.substring(targetHandle.length - 3, targetHandle.length)
-        );
+        console.log("sourceHandle: ",sourceHandle);
+        console.log("targetHandle: ",targetHandle);
 
         let edge_id: string;
 
@@ -152,7 +163,7 @@ function Canvas(props: CanvasProp) {
                 onEdgesChange={onEdgesChange}
                 onEdgesDelete={onEdgesDelete}
                 onConnect={onConnect}
-                nodeTypes={nodeTypes}
+                nodeTypes={NodesTypes}
                 onInit={setReactFlowInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}

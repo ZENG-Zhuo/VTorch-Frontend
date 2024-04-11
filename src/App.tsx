@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import Canvas from "./Canvas/Canvas";
+import Canvas, { setModuleChanged } from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
@@ -248,6 +248,7 @@ export default function App() {
                         if (c.functions.find((f) => f.name === "__init__"))
                             importedClasses.set(c.name, c);
                     });
+                    setModuleChanged();
                     setParsedClasses(importedClasses);
                     console.log("imported: ", importedClasses);
                 } else throw "torch.nn not found";
@@ -257,8 +258,8 @@ export default function App() {
         <div className="container">
             <ReactFlowProvider>
                 <div className="main">
-                    <Sider modules={parsedClassesWithInit} />
-                    <Canvas modules={parsedClassesWithInit} />
+                    {parsedClassesWithInit?<Sider modules={parsedClassesWithInit} />:undefined}
+                    {parsedClassesWithInit?<Canvas modules={parsedClassesWithInit} />:undefined}
                 </div>
             </ReactFlowProvider>
         </div>
