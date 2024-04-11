@@ -2,7 +2,9 @@ import React, {useState} from "react";
 import "./LoginPage.css"
 import {ExclamationCircleOutlined, LoginOutlined} from "@ant-design/icons";
 import { LeftOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Form, type FormProps, Input, FloatButton } from 'antd';
+import { Button, Checkbox, Form, type FormProps, Input, FloatButton, message } from 'antd';
+import { login } from "../../dataCom";
+import md5 from "md5";
 
 const LoginPage = () => {
 
@@ -11,9 +13,46 @@ const LoginPage = () => {
       password?: string;
       remember?: string;
     };
+    const [messageApi, contextHolder] = message.useMessage();
+    const msgKey = "loginPage";
 
     const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
       console.log('Success:', values);
+      const username = values.username;
+        if (
+            username &&
+            values.password
+        ) {
+            messageApi.open({
+                key: msgKey,
+                type: "loading",
+                content: "Loading...",
+            });
+            login(username, md5(values.password)).then((r) => {
+                if (r.status === 200) {
+                    messageApi.open({
+                        key: msgKey,
+                        type: "success",
+                        content: "Success!",
+                        duration: 2,
+                    });
+                } else {
+                    messageApi.open({
+                        key: msgKey,
+                        type: "error",
+                        content: "Backend error!",
+                        duration: 2,
+                    });
+                }
+            });
+        } else {
+            messageApi.open({
+                key: msgKey,
+                type: "error",
+                content: "The passwords entered are not identical.",
+                duration: 2,
+            });
+        }
     };
 
     const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
@@ -21,6 +60,8 @@ const LoginPage = () => {
     };
 
     return(
+        <>
+        {contextHolder}
         <div className="LoginPage">
         <div className="FormContainer">
         <div className="title" >
@@ -72,6 +113,7 @@ const LoginPage = () => {
             <FloatButton href='/' icon={<LeftOutlined/> } />
         </div>
         </div>
+        </>
     )
 }
 

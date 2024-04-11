@@ -23,7 +23,7 @@ const RegisterPage = () => {
     };
 
     const [messageApi, contextHolder] = message.useMessage();
-    const msgKey = "loginPage";
+    const msgKey = "registerPage";
 
     const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
         console.log("Success:", values);
