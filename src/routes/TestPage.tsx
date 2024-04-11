@@ -1,23 +1,8 @@
-import axios from "axios";
 import { Database } from "../common/objectStorage";
 const backEndUrl = "http://localhost:8001";
 
 function testFunc() {
-    axios
-        .post(
-            backEndUrl + "/api/getDatabase",
-            {},
-            {
-                maxContentLength: Infinity,
-                maxBodyLength: Infinity,
-            }
-        )
-        .then((data) => {
-            console.log(data);
-        })
-        .catch((reason) => {
-            console.log(reason);
-        });
+   
 }
 
 function testGoogle() {
