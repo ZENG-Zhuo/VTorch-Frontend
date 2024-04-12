@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import Canvas, { setModuleChanged } from "./Canvas/Canvas";
+import Canvas from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
@@ -217,7 +217,6 @@ async function readFileContent(fileName: string) {
 }
 
 export default function App() {
-    console.log(jsonContent);
     const [parsedClassesWithInit, setParsedClasses] = useState<
         Map<string, ClassInfo> | undefined
     >(undefined);
@@ -248,7 +247,6 @@ export default function App() {
                         if (c.functions.find((f) => f.name === "__init__"))
                             importedClasses.set(c.name, c);
                     });
-                    setModuleChanged();
                     setParsedClasses(importedClasses);
                     console.log("imported: ", importedClasses);
                 } else throw "torch.nn not found";

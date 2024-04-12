@@ -1,6 +1,6 @@
 import { ComponentType, useCallback } from 'react';
 import { Handle, NodeProps, Position, useNodeId } from 'reactflow';
-import { ClassInfo } from '../common/pythonObjectTypes';
+import { ClassInfo, TypeInfo } from '../common/pythonObjectTypes';
 import type { CollapseProps } from 'antd';
 import { Collapse } from 'antd';
 
@@ -147,6 +147,67 @@ function NNmoduleToDiv(module: any) {
 		</div>), nodeid]
 	)
 }
+function checkIfTensor(
+    typeInfo: TypeInfo
+): "Tensor" | "Optional" | "Any" | undefined {
+    if (typeInfo.type === "Tensor") {
+        return "Tensor";
+    } else if (
+        typeInfo.type === "Optional" &&
+        typeInfo.subtypes.length > 0 &&
+        typeInfo.subtypes[0].type === "Tensor"
+    ) {
+        return "Optional";
+    } else if (
+        typeInfo.type === "List" &&
+        typeInfo.subtypes.length > 0 &&
+        typeInfo.subtypes[0].type === "Tensor"
+    ) {
+        return "Any";
+    } else if (
+        typeInfo.type === "Tuple" &&
+        typeInfo.subtypes.length === 2 &&
+        typeInfo.subtypes[0].type === "Tensor" &&
+        typeInfo.subtypes[1].type === "Variadic"
+    ) {
+        return "Any";
+    }
+}
+
+function getTensorNum(params: TypeInfo[]): [number, number] | "any" {
+    if (params.length === 0) {
+        return [0, 0];
+    }
+    const [head, ...tail] = params;
+    let type_hint = head;
+    if (type_hint) {
+        if (type_hint.type === "UNION") {
+            if (type_hint.subtypes[0]) type_hint = type_hint.subtypes[0];
+        }
+        const ifTensor = checkIfTensor(type_hint);
+        switch (ifTensor) {
+            case "Any":
+                return "any";
+            case "Optional":
+                var recursionResult = getTensorNum(tail);
+                if (recursionResult === "any") {
+                    throw "any after optional!";
+                }
+                return [recursionResult[0], recursionResult[1] + 1];
+            case "Tensor":
+                var recursionResult = getTensorNum(tail);
+                if (recursionResult === "any") {
+                    throw "any after tensor!";
+                }
+                return [recursionResult[0] + 1, recursionResult[1]];
+            default:
+                return [0, 0];
+        }
+    } else {
+        return [0, 0];
+    }
+} // return [compulsory tensor, optional tensor] or "any" --- any number of tensor tensor
+
 
 function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
 

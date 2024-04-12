@@ -37,10 +37,10 @@ const getId = () => `node${++id}`;
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
 }
-let moduleChanged: boolean = false;
-export function setModuleChanged() {
-    moduleChanged = true;
-}
+// let moduleChanged: boolean = false;
+// export function setModuleChanged() {
+//     moduleChanged = true;
+// }
 
 let classdict = GetClassDict();
 
@@ -52,8 +52,7 @@ function Canvas(props: CanvasProp) {
     // const [NodesTypes, setNodesTypes] = useState(initialNodeTypes);
 
     const modules = props.modules;
-    if (moduleChanged && modules) {
-        moduleChanged = false;
+    if (modules) {
         modules.forEach((classInfo, name) => {
             const moduleFunction = GenerateModuleFunction(classInfo);
             // let newNodes = { ...NodesTypes };
