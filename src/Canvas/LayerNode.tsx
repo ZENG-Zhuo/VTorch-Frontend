@@ -1,55 +1,44 @@
 import { ComponentType, useCallback } from "react";
-import { Handle, NodeProps, Position, useNodeId } from "reactflow";
+import { Connection, Handle, NodeProps, Position, useNodeId } from "reactflow";
 import { ClassInfo, TypeInfo } from "../common/pythonObjectTypes";
 import type { CollapseProps } from "antd";
 import { Collapse } from "antd";
+import { NodeId } from "../common/pythonFileTypes";
 
 class Param {
-    name;
-    type;
-    value;
-    constructor(name: any, type: any) {
+    name: string;
+    value: string | null = "";
+    constructor(name: string) {
         this.name = name;
-        this.type = type;
-        this.value = "";
-    }
-}
-
-class ParamValue {
-    name;
-    value;
-    constructor(name: any, value: any) {
-        this.name = name;
-        this.value = value;
     }
 }
 
 class Module {
-    params;
-    name;
+    params: Param[];
+    name: string;
 
-    constructor(params: any, moduleName: any) {
+    constructor(params: Param[], moduleName: string) {
         this.params = params;
         this.name = moduleName;
     }
 }
 
 function ParamInput(
-    moduleName: any,
-    nodeid: any,
-    name: any,
-    type: any,
-    param: any,
-    key: any
+    moduleName: string,
+    nodeid: string,
+    name: string,
+    type: string,
+    param: Param,
+    key: number
 ) {
     const onChange = useCallback((evt: any) => {
         console.log(evt.target.value);
         param.value = evt.target.value;
     }, []);
 
-    function onConnect(connection: any) {
+    function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
-        param.value = source;
+        param.source = source;
     }
 
     // const onConnect = useCallback((evt: any) => {
@@ -57,7 +46,7 @@ function ParamInput(
     // },[])
 
     let id_name: string = name as string;
-    let id_key: string = key as string;
+    let id_key: string = key.toString();
 
     return (
         <div key={name}>
@@ -78,7 +67,19 @@ function ParamInput(
 
 type ParamType = "Tensor" | "Param";
 
-class SourceHandel {
+class ParamHandle {
+	source: string | undefined;
+	type: ParamType;
+	param: Param;
+	optional: boolean;
+	constructor(type: ParamType, param: Param, optional: boolean) {
+		this.type = type;
+		this.param = param;
+		this.optional = optional;
+	}
+}
+
+class SourceHandle {
     source: string | undefined;
     type: ParamType;
     optional: boolean;
@@ -88,7 +89,7 @@ class SourceHandel {
     }
 }
 
-class TargetHandel {
+class TargetHandle {
     targets: string[] = [];
     type: ParamType;
     constructor(type: ParamType) {
@@ -98,12 +99,13 @@ class TargetHandel {
 
 export class ClassInstance {
     name: string;
-    paramsHandels: SourceHandel[] = [];
-    forwardhandels: SourceHandel[] = [];
-    targetHandles: TargetHandel[] = [];
-    constructor(name: string, params: any) {
+    paramsHandles: ParamHandle[] = [];
+    instanceNodeId: NodeId | undefined;
+    forwardHandles: SourceHandle[] = [];
+    targetHandles: TargetHandle[] = [];
+    constructor(name: string, paramsHandles: ParamHandle[]) {
         this.name = name;
-        this.params = params;
+        this.paramsHandles = paramsHandles;
     }
 }
 
@@ -122,7 +124,7 @@ function InputTensor() {
         classdict[nodeid] = classInstance;
     }
 
-    function onConnect(connection: any) {
+    function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
     }
 
@@ -152,7 +154,7 @@ function OutputTensor() {
         classdict[nodeid] = classInstance;
     }
 
-    function onConnect(connection: any) {
+    function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
     }
 
@@ -188,12 +190,11 @@ function NNmoduleToDiv(module: any) {
 
     return [
         <div>
-            {classdict[nodeid].params.map((param: any, key: any) =>
+            {classdict[nodeid].paramsHandles.map((paramsHandle: ParamHandle, key: number) =>
                 ParamInput(
                     moduleName,
                     nodeid,
-                    param.name,
-                    param.type,
+                    paramsHandle.param.name,
                     param,
                     key
                 )
@@ -273,13 +274,18 @@ function GenerateModuleFunction(
         throw new Error(`__init__ function not found in ClassInfo`);
     }
 
+    const typeInfos = initFunc.parameters.map((p) => {
+        if (p.type_hint) return p.type_hint;
+        throw "type_hint undefined" + p.name;
+    });
+
     const params = initFunc.parameters.map(
-        (param) => new Param(param.name, param.type_hint?.toString())
+        (param) => new Param(param.name)
     );
 
     const moduleName: string = classInfo.name;
 
-    function onConnect(connection: any) {
+    function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
         if (
             targetHandle.substring(
