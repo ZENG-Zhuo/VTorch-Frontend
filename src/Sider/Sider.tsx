@@ -4,7 +4,12 @@ import classnames from "classnames";
 import "./Sider.css";
 // import {Scrollbars} from 'react-custom-scrollbars';
 import { useStore, useReactFlow } from "reactflow";
-import { InputTensor, OutputTensor, GetClassDict } from "../Canvas/LayerNode";
+import {
+    InputTensor,
+    OutputTensor,
+    GetClassDict,
+    ClassInstance,
+} from "../Canvas/LayerNode";
 import { ClassInfo } from "../common/pythonObjectTypes";
 import { Sidenav, Nav, Toggle } from "rsuite";
 import DashboardIcon from "@rsuite/icons/legacy/Dashboard";
@@ -19,11 +24,12 @@ interface SiderProp {
 
 function Sider(props: SiderProp) {
     let modules = props.modules;
-    const BasicNodes = [ // need type def here
+    const BasicNodes = [
+        // need type def here
         { type: "Input", data: { label: "input tensor" } },
         { type: "Output", data: { label: "output tensor" } },
     ];
-    let NnNodes:Array<any> = [];
+    let NnNodes: Array<any> = [];
     if (modules)
         NnNodes = Array.from(modules, (classNameAndInfo) => {
             return {
@@ -49,25 +55,28 @@ function Sider(props: SiderProp) {
     }
 
     function OnClickButton() {
-        let nodes: any = GetClassDict();
+        let nodes: { [key: string]: ClassInstance } = structuredClone(
+            GetClassDict()
+        );
 
-        for (let key in nodes) {
-            if (String(nodes[key].name) == "input") {
-                nodes[key]["source"] = [];
-            }
-            if (String(nodes[key].name) == "output") {
-                nodes[key]["target"] = [];
-            }
-        }
+        // for (let key in nodes) {
+        //     if (String(nodes[key].name) == "input") {
+        //         nodes[key]["source"] = [];
+        //     }
+        //     if (String(nodes[key].name) == "output") {
+        //         nodes[key]["target"] = [];
+        //     }
+        // }
+
+        // edges.forEach((edge) => {
+        //     nodes[edge.target]["source"] = [];
+        //     nodes[edge.source]["target"] = [];
+        // });
 
         edges.forEach((edge) => {
-            nodes[edge.target]["source"] = [];
-            nodes[edge.source]["target"] = [];
-        });
-
-        edges.forEach((edge) => {
-            console.log(edge.target);
-            console.log(edge.source);
+            console.log(edge.id)
+            console.log(edge.targetHandle);
+            console.log(edge.sourceHandle);
 
             nodes[edge.target]["source"].push(String(edge.source));
             nodes[edge.source]["target"].push(String(edge.target));

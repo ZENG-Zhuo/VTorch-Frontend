@@ -1,7 +1,6 @@
 import { ComponentType, useCallback } from 'react';
-import { Background, Handle, NodeProps, Position, useNodeId } from 'reactflow';
+import { Handle, NodeProps, Position, useNodeId } from 'reactflow';
 import { ClassInfo } from '../common/pythonObjectTypes';
-import internal from 'stream';
 import type { CollapseProps } from 'antd';
 import { Collapse } from 'antd';
 
@@ -65,9 +64,11 @@ function ParamInput(moduleName: any, nodeid: any, name: any, type: any, param: a
 }
 
 
-class ClassInstance {
+export class ClassInstance {
 	params;
 	name;
+	source: string[] = [];
+	target: string[] = [];
 	constructor(name: any, params: any) {
 		this.name = name;
 		this.params = params;
@@ -126,8 +127,8 @@ function OutputTensor() {
 }
 
 function NNmoduleToDiv(module: any) {
-
 	let nodeid = useNodeId()
+
 	let params = module.params
 	let moduleName = module.name
 
@@ -141,14 +142,13 @@ function NNmoduleToDiv(module: any) {
 
 
 	return (
-		<div>
+		[(<div>
 			{classdict[nodeid].params.map((param: any, key: any) => ParamInput(moduleName, nodeid, param.name, param.type, param, key))}
-		</div>
+		</div>), nodeid]
 	)
 }
 
 function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> {
-	let nodeid = useNodeId()
 
 	const initFunc = classInfo.functions.find(func => func.name === '__init__');
 	if (!initFunc) {
@@ -175,10 +175,11 @@ function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> 
 	return function () {
 		const module = new Module(params, moduleName);
 		// return NNmoduleToDiv(module);
+		const [div, nodeid] = NNmoduleToDiv(module)
 		const item: CollapseProps['items'] = [
 			{
 				label: moduleName,
-				children: NNmoduleToDiv(module)
+				children: div
 			}
 		]
 		return <div className="text-updater-node">
@@ -190,13 +191,13 @@ function GenerateModuleFunction(classInfo: ClassInfo): ComponentType<NodeProps> 
 }
 
 
-function BatchNorm2D() {
-let param1 = new Param("num_feature", "int");
-let param2 = new Param("eps", "float");
-let param3 = new Param("momentum", "float");
-let module = new Module([param1, param2, param3], "BatchNorm2D");
-// console.log(module.params);
-return NNmoduleToDiv(module);
-}
+// function BatchNorm2D() {
+// let param1 = new Param("num_feature", "int");
+// let param2 = new Param("eps", "float");
+// let param3 = new Param("momentum", "float");
+// let module = new Module([param1, param2, param3], "BatchNorm2D");
+// // console.log(module.params);
+// return NNmoduleToDiv(module);
+// }
 
-export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction, BatchNorm2D };
+export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction};

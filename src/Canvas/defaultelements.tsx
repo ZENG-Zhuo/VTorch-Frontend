@@ -1,4 +1,5 @@
 import {Node} from "reactflow"
+import { MarkerType } from "reactflow";
 
 const initialNodes: Node[] = [
     {
@@ -45,13 +46,33 @@ const initialNodes: Node[] = [
   
   
   const initialEdges = [
-    { id: 'edge1-2_flow', source: 'node1',sourceHandle:'input', target: 'node2', targetHandle:'Conv2d-node2-input' ,style: { strokeWidth: 3 }},
-    { id: 'edge2-4_flow', source: 'node2',sourceHandle:'Conv2d-node2-output', target: 'node4', targetHandle:'Conv2d-node4-input' ,style: { strokeWidth: 3 }},
-    { id: 'edge1-3_flow', source: 'node1',sourceHandle:'input', target: 'node3', targetHandle:'Conv2d-node3-input' ,style: { strokeWidth: 3 }},
-    { id: 'edge4-5_flow', source: 'node4',sourceHandle:'Conv2d-node4-output', target: 'node5',targetHandle:'AvgPool2d-node5-input', style: { strokeWidth: 3 }},
-    { id: 'edge3-5_flow', source: 'node3',sourceHandle:'Conv2d-node3-output', target: 'node5',targetHandle:'AvgPool2d-node5-input',style: { strokeWidth: 3 }},
-    { id: 'edge5-6_flow', source: 'node5',sourceHandle:'AvgPool2d-node5-output' ,target: 'node6',targetHandle:'ReLU-node6-input' ,style: { strokeWidth: 3 }},
-    { id: 'edge6-7_flow', source: 'node6', sourceHandle:"ReLU-node6-output", target: 'node7', targetHandle:"output", style: { strokeWidth: 3 }},
+    { id: 'edge1-2_flow', source: 'node1',sourceHandle:'input',
+     target: 'node2', targetHandle:'Conv2d-node2-input' ,
+     style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+     
+    { id: 'edge2-4_flow', source: 'node2',sourceHandle:'Conv2d-node2-output',
+     target: 'node4', targetHandle:'Conv2d-node4-input' ,
+     style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+
+    { id: 'edge1-3_flow', source: 'node1',sourceHandle:'input',
+     target: 'node3', targetHandle:'Conv2d-node3-input' ,
+     style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+
+    { id: 'edge4-5_flow', source: 'node4',sourceHandle:'Conv2d-node4-output',
+     target: 'node5',targetHandle:'AvgPool2d-node5-input',
+      style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+
+    { id: 'edge3-5_flow', source: 'node3',sourceHandle:'Conv2d-node3-output',
+     target: 'node5',targetHandle:'AvgPool2d-node5-input',
+     style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+
+    { id: 'edge5-6_flow', source: 'node5',sourceHandle:'AvgPool2d-node5-output' ,
+    target: 'node6',targetHandle:'ReLU-node6-input' ,
+    style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
+
+    { id: 'edge6-7_flow', source: 'node6', sourceHandle:"ReLU-node6-output",
+     target: 'node7', targetHandle:"output",
+      style: { strokeWidth: 3 },markerEnd: {type: MarkerType.ArrowClosed}},
   ];
 
   export {initialNodes, initialEdges};

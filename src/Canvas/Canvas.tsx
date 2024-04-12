@@ -16,7 +16,6 @@ import {
     OutputTensor,
     GetClassDict,
     GenerateModuleFunction,
-    BatchNorm2D
 } from "./LayerNode";
 import { FloatButton } from "antd";
 import { LeftOutlined } from "@ant-design/icons";
@@ -42,6 +41,8 @@ let moduleChanged: boolean = false;
 export function setModuleChanged() {
     moduleChanged = true;
 }
+
+let classdict = GetClassDict();
 
 function Canvas(props: CanvasProp) {
     const reactFlowWrapper = useRef<HTMLInputElement>(null);
@@ -115,8 +116,8 @@ function Canvas(props: CanvasProp) {
         let src_num: any = source.slice(4);
         let tag_num: any = target.slice(4);
 
-        console.log("sourceHandle: ",sourceHandle);
-        console.log("targetHandle: ",targetHandle);
+        console.log("sourceHandle: ", sourceHandle);
+        console.log("targetHandle: ", targetHandle);
 
         let edge_id: string;
 
