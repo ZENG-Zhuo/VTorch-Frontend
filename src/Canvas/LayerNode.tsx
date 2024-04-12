@@ -76,12 +76,32 @@ function ParamInput(
     );
 }
 
+type ParamType = "Tensor" | "Param";
+
+class SourceHandel {
+    source: string | undefined;
+    type: ParamType;
+    optional: boolean;
+    constructor(type: ParamType, optional: boolean) {
+        this.type = type;
+        this.optional = optional;
+    }
+}
+
+class TargetHandel {
+    targets: string[] = [];
+    type: ParamType;
+    constructor(type: ParamType) {
+        this.type = type;
+    }
+}
+
 export class ClassInstance {
-    params;
-    name;
-    source: string[] = [];
-    target: string[] = [];
-    constructor(name: any, params: any) {
+    name: string;
+    paramsHandels: SourceHandel[] = [];
+    forwardhandels: SourceHandel[] = [];
+    targetHandles: TargetHandel[] = [];
+    constructor(name: string, params: any) {
         this.name = name;
         this.params = params;
     }
@@ -312,6 +332,5 @@ function GenerateModuleFunction(
         );
     };
 }
-
 
 export { InputTensor, OutputTensor, GetClassDict, GenerateModuleFunction };
