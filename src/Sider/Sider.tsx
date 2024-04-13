@@ -81,24 +81,28 @@ function Sider(props: SiderProp) {
             let targetHandle = edge.targetHandle;
             let sourceHandle = edge.sourceHandle;
 
-            if(targetHandle!.substring(
-                targetHandle!.length - 5,
-                targetHandle!.length - 2
-            ) == "put"){
+            if (
+                targetHandle!.substring(
+                    targetHandle!.length - 5,
+                    targetHandle!.length - 2
+                ) == "put"
+            ) {
                 // input and output, forward transfer
                 let source_key = edge.sourceHandle!.slice(-1);
                 let target_key = edge.targetHandle!.slice(-1);
 
-                nodes[edge.target].forwardHandles[Number(target_key)].source!=String(edge.source);
-                nodes[edge.source].targetHandles[Number(source_key)].targets.push(String(edge.target));
+                nodes[edge.target].forwardHandles[Number(target_key)].source =
+                    String(edge.source);
+                nodes[edge.source].targetHandles[
+                    Number(source_key)
+                ].targets.push(String(edge.target));
             } else {
                 // parameter transfer
                 let param_key = edge.targetHandle!.slice(-1);
 
-                nodes[edge.target].paramsHandles[Number(param_key)].source != edge.source
+                nodes[edge.target].paramsHandles[Number(param_key)].source =
+                    edge.source;
             }
-
-            
         });
         var jsonData = JSON.stringify(nodes, null, "\t");
         console.log(jsonData);

@@ -180,19 +180,19 @@ function NNmoduleToDiv(module: any) {
     let params = module.params;
     let moduleName = module.name;
 
-    if (nodeid == null) {
+    if (nodeid === null) {
         nodeid = "node1";
     } else if (!(nodeid in classdict)) {
         let classInstance = new ClassInstance(module.name, params);
         classdict[nodeid] = classInstance;
     }
-
+    const nodeId: string = nodeid;
     return [
         <div>
             {classdict[nodeid].paramsHandles.map((paramsHandle: ParamHandle, key: number) =>
                 ParamInput(
                     moduleName,
-                    nodeid,
+                    nodeId,
                     paramsHandle.param.name,
                     paramsHandle,
                     key

@@ -23,6 +23,7 @@ import RegisterPage from "./routes/Login/RegisterPage";
 import HomePage from "./routes/HomePage/HomePage.jsx";
 import { error } from "console";
 import TestPage from "./routes/TestPage";
+import DatasetPage from "./routes/DatasetBuilding/DatasetPage";
 
 const router = createBrowserRouter([
     {
@@ -53,6 +54,11 @@ const router = createBrowserRouter([
     {
         path: "/test",
         element: <TestPage />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/dataset",
+        element: <DatasetPage />,
         errorElement: <ErrorPage />,
     },
 ]);
