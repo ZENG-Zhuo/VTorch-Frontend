@@ -1,4 +1,4 @@
-import { ComponentType, useCallback } from "react";
+import { ChangeEvent, ComponentType, useCallback } from "react";
 import { Connection, Handle, NodeProps, Position, useNodeId } from "reactflow";
 import { ClassInfo, TypeInfo } from "../common/pythonObjectTypes";
 import type { CollapseProps } from "antd";
@@ -30,7 +30,7 @@ function ParamInput(
     paramHandle: ParamHandle,
     key: number
 ) {
-    const onChange = useCallback((evt: any) => {
+    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
         console.log(evt.target.value);
         paramHandle.param.value = evt.target.value;
     }, []);

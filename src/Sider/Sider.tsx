@@ -29,7 +29,7 @@ function Sider(props: SiderProp) {
         { type: "Input", data: { label: "input tensor" } },
         { type: "Output", data: { label: "output tensor" } },
     ];
-    let NnNodes: Array<any> = [];
+    let NnNodes: Array<{ type: string; data: { label: string } }> = [];
     if (modules)
         NnNodes = Array.from(modules, (classNameAndInfo) => {
             return {
@@ -74,7 +74,7 @@ function Sider(props: SiderProp) {
         // });
 
         edges.forEach((edge) => {
-            console.log(edge.id)
+            console.log(edge.id);
             console.log(edge.targetHandle);
             console.log(edge.sourceHandle);
 
