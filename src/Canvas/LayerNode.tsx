@@ -67,15 +67,15 @@ function ParamInput(
 type ParamType = "Tensor" | "Param";
 
 class ParamHandle {
-	source: string | null = "";
-	type: ParamType;
-	param: Param;
-	optional: boolean;
-	constructor(type: ParamType, param: Param, optional: boolean) {
-		this.type = type;
-		this.param = param;
-		this.optional = optional;
-	}
+    source: string | null = "";
+    type: ParamType;
+    param: Param;
+    optional: boolean;
+    constructor(type: ParamType, param: Param, optional: boolean) {
+        this.type = type;
+        this.param = param;
+        this.optional = optional;
+    }
 }
 
 class SourceHandle {
@@ -189,14 +189,15 @@ function NNmoduleToDiv(module: any) {
     const nodeId: string = nodeid;
     return [
         <div>
-            {classdict[nodeid].paramsHandles.map((paramsHandle: ParamHandle, key: number) =>
-                ParamInput(
-                    moduleName,
-                    nodeId,
-                    paramsHandle.param.name,
-                    paramsHandle,
-                    key
-                )
+            {classdict[nodeid].paramsHandles.map(
+                (paramsHandle: ParamHandle, key: number) =>
+                    ParamInput(
+                        moduleName,
+                        nodeId,
+                        paramsHandle.param.name,
+                        paramsHandle,
+                        key
+                    )
             )}
         </div>,
         nodeid,
@@ -273,26 +274,31 @@ function GenerateModuleFunction(
         throw new Error(`__init__ function not found in ClassInfo`);
     }
 
-    const typeInfos = initFunc.parameters.slice(1).map((p) => {
+    const typeInfoU = initFunc.parameters.slice(1).map((p) => {
         if (p.type_hint) return p.type_hint;
-        throw "type_hint undefined" + p.name;
     });
-    const [tensorNumber, tensorOption] = getTensorNum(typeInfos)
+    const typeInfos: TypeInfo[] = [];
+    typeInfoU.map((t) => {
+        if (t) typeInfos.push(t);
+    });
 
-    const paramsHandle = initFunc.parameters.map(
-        (param, key) =>{
-            let newParam = new Param(param.name)
-            let newParamHandle: ParamHandle;
-            if((key+1)>0 && (key+1)<= Number(tensorNumber)){
-                newParamHandle = new ParamHandle("Tensor",newParam,false);
-            } else if((key+1)>Number(tensorNumber) && (key+1) < (Number(tensorNumber)+Number(tensorOption))){
-                newParamHandle = new ParamHandle("Tensor",newParam,true);
-            } else{
-                newParamHandle = new ParamHandle("Param",newParam,true);
-            }
-            return newParamHandle;
-        } 
-    );
+    const [tensorNumber, tensorOption] = getTensorNum(typeInfos);
+
+    const paramsHandle = initFunc.parameters.map((param, key) => {
+        let newParam = new Param(param.name);
+        let newParamHandle: ParamHandle;
+        if (key + 1 > 0 && key + 1 <= Number(tensorNumber)) {
+            newParamHandle = new ParamHandle("Tensor", newParam, false);
+        } else if (
+            key + 1 > Number(tensorNumber) &&
+            key + 1 < Number(tensorNumber) + Number(tensorOption)
+        ) {
+            newParamHandle = new ParamHandle("Tensor", newParam, true);
+        } else {
+            newParamHandle = new ParamHandle("Param", newParam, true);
+        }
+        return newParamHandle;
+    });
 
     const moduleName: string = classInfo.name;
 
