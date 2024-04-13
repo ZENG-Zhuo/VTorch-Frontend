@@ -43,7 +43,6 @@ function extractClassBaseModule(
     return result;
 }
 
-
 async function readFileContent(fileName: string) {
     try {
         const response = await fetch(fileName);
@@ -69,6 +68,17 @@ export default function App() {
                 );
                 if (nodeId) {
                     const node = Database.getNode(nodeId);
+                    const modulesNodeId = node.getSubModule(
+                        ["nn", "modules"],
+                        false
+                    );
+                    if (!modulesNodeId) {
+                        throw "torch.nn.modules not found";
+                    }
+                    const modulesAll = Database.getNode(modulesNodeId).__all__;
+                    if (!modulesAll) {
+                        throw "torch.nn.modules has not yet initialized";
+                    }
                     console.log("node: ", node);
                     const importedClasses: Map<string, ClassInfo> = new Map();
                     node.importedClasses.forEach((value, alias) => {
@@ -76,15 +86,23 @@ export default function App() {
                             value[0]
                         );
                         if (
-                            classInfo?.functions.find(
+                            classInfo &&
+                            modulesAll.includes(classInfo.name) &&
+                            classInfo.functions.find(
                                 (f) => f.name === "__init__"
                             )
                         )
                             importedClasses.set(alias, classInfo);
                     });
-                    node.classes.forEach((c) => {
-                        if (c.functions.find((f) => f.name === "__init__"))
-                            importedClasses.set(c.name, c);
+                    node.classes.forEach((classInfo) => {
+                        if (
+                            classInfo &&
+                            modulesAll.includes(classInfo.name) &&
+                            classInfo.functions.find(
+                                (f) => f.name === "__init__"
+                            )
+                        )
+                            importedClasses.set(classInfo.name, classInfo);
                     });
                     setParsedClasses(importedClasses);
                     console.log("imported: ", importedClasses);
@@ -95,8 +113,12 @@ export default function App() {
         <div className="container">
             <ReactFlowProvider>
                 <div className="main">
-                    {parsedClassesWithInit?<Sider modules={parsedClassesWithInit} />:undefined}
-                    {parsedClassesWithInit?<Canvas modules={parsedClassesWithInit} />:undefined}
+                    {parsedClassesWithInit ? (
+                        <Sider modules={parsedClassesWithInit} />
+                    ) : undefined}
+                    {parsedClassesWithInit ? (
+                        <Canvas modules={parsedClassesWithInit} />
+                    ) : undefined}
                 </div>
             </ReactFlowProvider>
         </div>
