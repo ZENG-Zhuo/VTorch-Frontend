@@ -14,11 +14,11 @@ class Param {
 }
 
 class Module {
-    params: Param[];
+    paramsHandle: ParamHandle[];
     name: string;
 
-    constructor(params: Param[], moduleName: string) {
-        this.params = params;
+    constructor(paramsHandle: ParamHandle[], moduleName: string) {
+        this.paramsHandle = paramsHandle;
         this.name = moduleName;
     }
 }
@@ -27,18 +27,17 @@ function ParamInput(
     moduleName: string,
     nodeid: string,
     name: string,
-    type: string,
-    param: Param,
+    paramHandle: ParamHandle,
     key: number
 ) {
     const onChange = useCallback((evt: any) => {
         console.log(evt.target.value);
-        param.value = evt.target.value;
+        paramHandle.param.value = evt.target.value;
     }, []);
 
     function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
-        param.source = source;
+        paramHandle.source = source;
     }
 
     // const onConnect = useCallback((evt: any) => {
@@ -68,7 +67,7 @@ function ParamInput(
 type ParamType = "Tensor" | "Param";
 
 class ParamHandle {
-	source: string | undefined;
+	source: string | null = "";
 	type: ParamType;
 	param: Param;
 	optional: boolean;
@@ -195,7 +194,7 @@ function NNmoduleToDiv(module: any) {
                     moduleName,
                     nodeid,
                     paramsHandle.param.name,
-                    param,
+                    paramsHandle,
                     key
                 )
             )}
@@ -278,9 +277,21 @@ function GenerateModuleFunction(
         if (p.type_hint) return p.type_hint;
         throw "type_hint undefined" + p.name;
     });
+    const [tensorNumber, tensorOption] = getTensorNum(typeInfos)
 
-    const params = initFunc.parameters.map(
-        (param) => new Param(param.name)
+    const paramsHandle = initFunc.parameters.map(
+        (param, key) =>{
+            let newParam = new Param(param.name)
+            let newParamHandle: ParamHandle;
+            if((key+1)>0 && (key+1)<= Number(tensorNumber)){
+                newParamHandle = new ParamHandle("Tensor",newParam,true);
+            } else if((key+1)>Number(tensorNumber) && (key+1) < (Number(tensorNumber)+Number(tensorOption))){
+                newParamHandle = new ParamHandle("Tensor",newParam,false);
+            } else{
+                newParamHandle = new ParamHandle("Param",newParam,false);
+            }
+            return newParamHandle;
+        } 
     );
 
     const moduleName: string = classInfo.name;
@@ -288,23 +299,23 @@ function GenerateModuleFunction(
     function onConnect(connection: Connection) {
         const { source, sourceHandle, target, targetHandle } = connection;
         if (
-            targetHandle.substring(
-                targetHandle.length - 3,
-                targetHandle.length
+            targetHandle!.substring(
+                targetHandle!.length - 3,
+                targetHandle!.length
             ) == "put"
         ) {
             return;
         } else {
-            let splitHandle: any = targetHandle.split("-");
+            let splitHandle: any = targetHandle!.split("-");
             let key: number = splitHandle[splitHandle.length - 1];
             // console.log(key)
             // console.log(classdict[target].params[key])
-            classdict[target].params[key].value = source;
+            classdict[target!].paramsHandles[key].param.value = source;
         }
     }
 
     return function () {
-        const module = new Module(params, moduleName);
+        const module = new Module(paramsHandle, moduleName);
         // return NNmoduleToDiv(module);
         const [div, nodeid] = NNmoduleToDiv(module);
         const item: CollapseProps["items"] = [
