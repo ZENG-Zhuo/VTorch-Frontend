@@ -284,11 +284,11 @@ function GenerateModuleFunction(
             let newParam = new Param(param.name)
             let newParamHandle: ParamHandle;
             if((key+1)>0 && (key+1)<= Number(tensorNumber)){
-                newParamHandle = new ParamHandle("Tensor",newParam,true);
-            } else if((key+1)>Number(tensorNumber) && (key+1) < (Number(tensorNumber)+Number(tensorOption))){
                 newParamHandle = new ParamHandle("Tensor",newParam,false);
+            } else if((key+1)>Number(tensorNumber) && (key+1) < (Number(tensorNumber)+Number(tensorOption))){
+                newParamHandle = new ParamHandle("Tensor",newParam,true);
             } else{
-                newParamHandle = new ParamHandle("Param",newParam,false);
+                newParamHandle = new ParamHandle("Param",newParam,true);
             }
             return newParamHandle;
         } 
