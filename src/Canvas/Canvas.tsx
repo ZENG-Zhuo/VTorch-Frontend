@@ -57,7 +57,7 @@ function Canvas(props: CanvasProp) {
             const moduleFunction = GenerateModuleFunction(classInfo);
             // let newNodes = { ...NodesTypes };
             // newNodes[name] = moduleFunction;
-            NodesTypes[name] = moduleFunction;
+            if (moduleFunction) NodesTypes[name] = moduleFunction;
             // setNodesTypes(newNodes);
         });
     }

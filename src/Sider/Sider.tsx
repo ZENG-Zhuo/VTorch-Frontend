@@ -31,11 +31,12 @@ function Sider(props: SiderProp) {
     ];
     let NnNodes: Array<{ type: string; data: { label: string } }> = [];
     if (modules)
-        NnNodes = Array.from(modules, (classNameAndInfo) => {
-            return {
-                type: classNameAndInfo[0],
-                data: { label: classNameAndInfo[0] },
-            };
+        Array.from(modules, (classNameAndInfo) => {
+            if (classNameAndInfo[1].functions.find((f) => f.name === "forward"))
+                NnNodes.push({
+                    type: classNameAndInfo[0],
+                    data: { label: classNameAndInfo[0] },
+                });
         });
     const onDragStart = (event: any, nodeType: any) => {
         console.log("output the nodetype");

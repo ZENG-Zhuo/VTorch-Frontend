@@ -7,7 +7,8 @@ import { NodeId } from "../common/pythonFileTypes";
 
 class Param {
     name: string;
-    value: string | null = "";
+    initial_value: string = "";
+    value: string = "";
     constructor(name: string) {
         this.name = name;
     }
@@ -23,52 +24,12 @@ class Module {
     }
 }
 
-function ParamInput(
-    moduleName: string,
-    nodeid: string,
-    name: string,
-    paramHandle: ParamHandle,
-    key: number
-) {
-    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
-        console.log(evt.target.value);
-        paramHandle.param.value = evt.target.value;
-    }, []);
-
-    function onConnect(connection: Connection) {
-        const { source, sourceHandle, target, targetHandle } = connection;
-        paramHandle.source = source;
-    }
-
-    // const onConnect = useCallback((evt: any) => {
-    //   console.log(evt)
-    // },[])
-
-    let id_name: string = name as string;
-    let id_key: string = key.toString();
-
-    return (
-        <div key={name}>
-            <span>{name}</span> <br />
-            <input name="text" onChange={onChange} className="nodrag" />
-            <Handle
-                className="handle"
-                type="target"
-                onConnect={onConnect}
-                id={moduleName + "-" + nodeid + "-" + id_name + "-" + id_key}
-                position={Position.Left}
-                style={{ top: 46 * key + 85 }}
-                isConnectable={true}
-            />
-        </div>
-    );
-}
-
 type ParamType = "Tensor" | "Param";
 
 class ParamHandle {
     source: string | null = "";
     type: ParamType;
+    name: string | undefined;
     param: Param;
     optional: boolean;
     constructor(type: ParamType, param: Param, optional: boolean) {
@@ -80,6 +41,7 @@ class ParamHandle {
 
 class SourceHandle {
     source: string | undefined;
+    name: string | undefined;
     type: ParamType;
     optional: boolean;
     constructor(type: ParamType, optional: boolean) {
@@ -90,6 +52,7 @@ class SourceHandle {
 
 class TargetHandle {
     targets: string[] = [];
+    name: string | undefined;
     type: ParamType;
     constructor(type: ParamType) {
         this.type = type;
@@ -174,30 +137,91 @@ function OutputTensor() {
     );
 }
 
-function NNmoduleToDiv(module: any) {
+function ParamToInput(
+    moduleName: string,
+    nodeid: string,
+    paramHandle: ParamHandle,
+    key: number
+) {
+    let name = paramHandle.param.name;
+    let initial_value = paramHandle.param.initial_value;
+
+    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
+        console.log(evt.target.value);
+        paramHandle.param.value = evt.target.value;
+    }, []);
+
+    function onConnect(connection: Connection) {
+        const { source, sourceHandle, target, targetHandle } = connection;
+        paramHandle.source = source;
+    }
+
+    // const onConnect = useCallback((evt: any) => {
+    //   console.log(evt)
+    // },[])
+
+    let id_name: string = name as string;
+    let id_key: string = key.toString();
+    paramHandle.name = moduleName + "-" + nodeid + "-" + id_name + "-" + id_key;
+
+    if (name == "self") {
+        return <></>;
+    }
+
+    return (
+        <div key={name}>
+            <span>{name}</span> <br />
+            <input
+                name="text"
+                onChange={onChange}
+                className="nodrag"
+                placeholder={initial_value}
+            />
+            <Handle
+                className="handle"
+                type="target"
+                onConnect={onConnect}
+                id={paramHandle.name}
+                position={Position.Left}
+                style={{ top: 50 * (key - 1) + 110 }}
+                isConnectable={true}
+            />
+        </div>
+    );
+}
+
+function TargetToInput(
+    moduleName: string,
+    nodeid: string,
+    targetsHandle: TargetHandle,
+    key: number
+) {
+    let name = targetsHandle.name;
+
+}
+
+
+
+function NNmoduleToDiv(module: Module) {
     let nodeid = useNodeId();
 
-    let params = module.params;
+    let paramsHandle = module.paramsHandle;
     let moduleName = module.name;
 
     if (nodeid === null) {
         nodeid = "node1";
     } else if (!(nodeid in classdict)) {
-        let classInstance = new ClassInstance(module.name, params);
+        let classInstance = new ClassInstance(module.name, paramsHandle);
         classdict[nodeid] = classInstance;
     }
     const nodeId: string = nodeid;
+    // console.log("output classdict data", classdict[nodeid]);
+    // console.log(classdict[nodeid].paramsHandles.length)
     return [
         <div>
-            {classdict[nodeid].paramsHandles.map(
+            {classdict[nodeid].paramsHandles?.map(
                 (paramsHandle: ParamHandle, key: number) =>
-                    ParamInput(
-                        moduleName,
-                        nodeId,
-                        paramsHandle.param.name,
-                        paramsHandle,
-                        key
-                    )
+                    ParamToInput(moduleName, nodeId, paramsHandle, key)
             )}
         </div>,
         nodeid,
@@ -266,7 +290,7 @@ function getTensorNum(params: TypeInfo[]): [number, number] | "any" {
 
 function GenerateModuleFunction(
     classInfo: ClassInfo
-): ComponentType<NodeProps> {
+): ComponentType<NodeProps> | undefined {
     const initFunc = classInfo.functions.find(
         (func) => func.name === "__init__"
     );
@@ -281,23 +305,29 @@ function GenerateModuleFunction(
     typeInfoU.map((t) => {
         if (t) typeInfos.push(t);
     });
+    const forwardFunc = classInfo.functions.find((f) => f.name === "forward");
+    if (forwardFunc) {
+        console.log("forward func info: ", forwardFunc);
+    } else {
+        return;
+    }
 
-    const [tensorNumber, tensorOption] = getTensorNum(typeInfos);
-
-    const paramsHandle = initFunc.parameters.map((param, key) => {
+    const paramsHandle = initFunc.parameters.map((param) => {
         let newParam = new Param(param.name);
         let newParamHandle: ParamHandle;
-        if (key + 1 > 0 && key + 1 <= Number(tensorNumber)) {
-            newParamHandle = new ParamHandle("Tensor", newParam, false);
-        } else if (
-            key + 1 > Number(tensorNumber) &&
-            key + 1 < Number(tensorNumber) + Number(tensorOption)
-        ) {
-            newParamHandle = new ParamHandle("Tensor", newParam, true);
-        } else {
+
+        if (param.initial_value) {
+            // console.log(param.initial_value)
+            newParam.initial_value = param.initial_value;
             newParamHandle = new ParamHandle("Param", newParam, true);
+        } else {
+            newParam.initial_value = "";
+            newParamHandle = new ParamHandle("Param", newParam, false);
         }
+
         return newParamHandle;
+
+        // return new ParamHandle("Tensor", newParam, true);
     });
 
     const moduleName: string = classInfo.name;
@@ -312,11 +342,12 @@ function GenerateModuleFunction(
         ) {
             return;
         } else {
-            let splitHandle: any = targetHandle!.split("-");
-            let key: number = splitHandle[splitHandle.length - 1];
-            // console.log(key)
-            // console.log(classdict[target].params[key])
-            classdict[target!].paramsHandles[key].param.value = source;
+            let splitHandle: string[] = targetHandle!.split("-");
+            let key: number = Number(splitHandle[splitHandle.length - 1]);
+
+            if (source) {
+                classdict[target!].paramsHandles[key].param.value = source;
+            }
         }
     }
 
