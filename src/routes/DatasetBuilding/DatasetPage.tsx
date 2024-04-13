@@ -10,6 +10,22 @@ const gridStyle: React.CSSProperties = {
     width: "50%",
     textAlign: "center",
 };
+
+const steps = [
+    {
+      title: 'First',
+      content: 'First-content',
+    },
+    {
+      title: 'Second',
+      content: 'Second-content',
+    },
+    {
+      title: 'Last',
+      content: 'Last-content',
+    },
+  ];
+  
 export default function DatasetPage() {
     const {
         token: { colorBgContainer, borderRadiusLG },
