@@ -273,7 +273,7 @@ function GenerateModuleFunction(
         throw new Error(`__init__ function not found in ClassInfo`);
     }
 
-    const typeInfos = initFunc.parameters.map((p) => {
+    const typeInfos = initFunc.parameters.slice(1).map((p) => {
         if (p.type_hint) return p.type_hint;
         throw "type_hint undefined" + p.name;
     });
