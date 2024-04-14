@@ -5,6 +5,7 @@ import {
     Input,
     Layout,
     Menu,
+    Select,
     Steps,
     Switch,
     message,
@@ -15,6 +16,10 @@ import Title from "antd/es/typography/Title";
 import { cpuUsage } from "process";
 import { useState } from "react";
 import { UnaryExpression } from "typescript";
+import { Database } from "../../common/objectStorage";
+import { updateDatabase } from "../../dataCom";
+import { FileModuleNode, FolderModuleNode } from "../../common/pythonFileTypes";
+import { ClassInfo } from "../../common/pythonObjectTypes";
 const { Content, Footer, Header } = Layout;
 const items = new Array(0).fill(null).map((_, index) => ({
     key: index + 1,
@@ -33,19 +38,6 @@ class DatasetTemplate {
     }
 }
 
-const datasetTemplatesData = [
-    { text: "Select from torchvision dataset" },
-    { text: "Build your own tabular dataset" },
-    { text: "Build your own image classification dataset" },
-    { text: "Build your own image segmentatio dataset" },
-    { text: "Build your own text dataset" },
-    { text: "Build dataset by code" },
-];
-
-const datasetTemplates = datasetTemplatesData.map(
-    (data) => new DatasetTemplate(data.text)
-);
-
 export default function DatasetPage() {
     const {
         token: {
@@ -59,6 +51,103 @@ export default function DatasetPage() {
     const [current, setCurrent] = useState(0);
     const [checkedId, setCheckedId] = useState(-1);
     const [databaseName, setDatabaseName] = useState("");
+    const [databaseLoaded, setDatabaseLoaded] = useState(
+        Database.packages.size > 0
+    );
+    const [torchvisionDatabaseName, setTorchvisionDatabaseName] = useState("");
+    let datasetOptions: { value: string; label: string }[] = [];
+    let torchvisionDatasets: FolderModuleNode | FileModuleNode | undefined;
+    let torchvisionDatasetsClasses: Map<string, ClassInfo> = new Map();
+    if (!databaseLoaded) {
+        updateDatabase(() => {
+            setDatabaseLoaded(true);
+        });
+    } else {
+        const torchvisionId = Database.findPackage("torchvision", "1.0.0");
+        if (torchvisionId) {
+            const torchvision = Database.getPackage(torchvisionId);
+            const datasetsId = torchvision.getSubModule(
+                ["torchvision", "datasets"],
+                false
+            );
+            if (datasetsId) {
+                torchvisionDatasets = Database.getNode(datasetsId);
+                torchvisionDatasets.classes.map((c) => {
+                    torchvisionDatasetsClasses.set(c.name, c);
+                });
+                Array.from(torchvisionDatasets.importedClasses, (entry) => {
+                    const classFound = torchvisionDatasets!.getClass(entry[0]);
+                    if (classFound) {
+                        torchvisionDatasetsClasses.set(entry[0], classFound);
+                    } else {
+                        throw "Invalid import info: " + entry[0];
+                    }
+                });
+            } else {
+                console.log(Database.packages);
+                throw "torchviison.datasets not loaded";
+            }
+        } else throw "torchvision not loaded!";
+        datasetOptions = Array.from(
+            torchvisionDatasetsClasses,
+            (nameAndClassInfo) => {
+                return {
+                    value: nameAndClassInfo[0],
+                    label: nameAndClassInfo[0],
+                };
+            }
+        );
+    }
+    const filterOption = (
+        input: string,
+        option?: { label: string; value: string }
+    ) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
+    const datasetTemplatesData = [
+        {
+            text: "Select from torchvision dataset",
+            component: [
+                <div>
+                    <Select
+                        showSearch
+                        style={{ width: 200 }}
+                        loading={!databaseLoaded}
+                        placeholder="Select a torchvision database"
+                        optionFilterProp="children"
+                        filterOption={filterOption}
+                        onChange={(v) => {
+                            setTorchvisionDatabaseName(v);
+                        }}
+                        options={databaseLoaded ? datasetOptions : []}
+                    />
+                </div>,
+                <div></div>,
+            ],
+        },
+        {
+            text: "Build your own tabular dataset",
+            component: [<div></div>, <div></div>],
+        },
+        {
+            text: "Build your own image classification dataset",
+            component: [<div></div>, <div></div>],
+        },
+        {
+            text: "Build your own image segmentatio dataset",
+            component: [<div></div>, <div></div>],
+        },
+        {
+            text: "Build your own text dataset",
+            component: [<div></div>, <div></div>],
+        },
+        {
+            text: "Build dataset by code",
+            component: [<div></div>, <div></div>],
+        },
+    ];
+
+    const datasetTemplates = datasetTemplatesData.map(
+        (data) => new DatasetTemplate(data.text)
+    );
     const steps = [
         {
             title: "First",
@@ -97,7 +186,7 @@ export default function DatasetPage() {
         },
         {
             title: "Second",
-            content: <div></div>,
+            content: <div>{datasetTemplatesData[checkedId]?.component[0]}</div>,
         },
         {
             title: "Last",
