@@ -2,12 +2,16 @@ import {
     Breadcrumb,
     Button,
     Card,
+    Flex,
     Input,
     Layout,
+    List,
     Menu,
+    Popover,
     Select,
     Steps,
     Switch,
+    Typography,
     message,
     theme,
 } from "antd";
@@ -20,6 +24,7 @@ import { Database } from "../../common/objectStorage";
 import { updateDatabase } from "../../dataCom";
 import { FileModuleNode, FolderModuleNode } from "../../common/pythonFileTypes";
 import { ClassInfo } from "../../common/pythonObjectTypes";
+import { PlusOutlined } from "@ant-design/icons";
 const { Content, Footer, Header } = Layout;
 const items = new Array(0).fill(null).map((_, index) => ({
     key: index + 1,
@@ -38,6 +43,11 @@ class DatasetTemplate {
     }
 }
 
+type TransformInstance = {
+    name: string;
+    parameters: string[];
+};
+
 export default function DatasetPage() {
     const {
         token: {
@@ -54,7 +64,8 @@ export default function DatasetPage() {
     const [databaseLoaded, setDatabaseLoaded] = useState(
         Database.packages.size > 0
     );
-    const [torchvisionDatabaseName, setTorchvisionDatabaseName] = useState("");
+    const [popoverChange, setPopoverChange] = useState(true);
+    const [torchvisionDatasetName, setTorchvisionDatasetName] = useState("");
     let datasetOptions: { value: string; label: string }[] = [];
     let torchvisionDatasets: FolderModuleNode | FileModuleNode | undefined;
     let torchvisionDatasetsClasses: Map<string, ClassInfo> = new Map();
@@ -102,25 +113,182 @@ export default function DatasetPage() {
         input: string,
         option?: { label: string; value: string }
     ) => (option?.label ?? "").toLowerCase().includes(input.toLowerCase());
+    const targetTorchvisionDataset = torchvisionDatasetsClasses.get(
+        torchvisionDatasetName
+    );
+    const targetTorchvisionDatasetInitFuncParams =
+        targetTorchvisionDataset?.functions
+            .find((f) => f.name === "__init__")
+            ?.parameters.slice(1);
+    const targetTorchvisionDatasetInitFuncValues: (
+        | string
+        | TransformInstance[]
+        | undefined
+    )[] = [];
+    targetTorchvisionDatasetInitFuncParams?.forEach(() => {
+        targetTorchvisionDatasetInitFuncValues.push(undefined);
+    });
+    console.log("Params: ", targetTorchvisionDatasetInitFuncParams);
+
+    function popOverContent(paramId: number) {
+        if (targetTorchvisionDatasetInitFuncValues[paramId] === undefined) {
+            targetTorchvisionDatasetInitFuncValues[paramId] =
+                [] as TransformInstance[];
+        }
+        const param = targetTorchvisionDatasetInitFuncValues[paramId];
+
+        const transformInstances = param as TransformInstance[];
+        return (
+            <div>
+                <List
+                    size="large"
+                    header={<div>Header</div>}
+                    footer={
+                        <div>
+                            <Button
+                                style={{ width: "100%" }}
+                                size="large"
+                                onClick={() => {
+                                    transformInstances.push({
+                                        name: "new",
+                                        parameters: [],
+                                    });
+                                    setPopoverChange(!popoverChange);
+                                    console.log("transforms: ",
+                                        transformInstances
+                                    );
+                                }}
+                            >
+                                <PlusOutlined />
+                            </Button>
+                        </div>
+                    }
+                    bordered
+                    dataSource={
+                        popoverChange ? transformInstances : transformInstances
+                    }
+                    renderItem={(item) => (
+                        <List.Item>
+                            <div>{item.name}</div>
+                        </List.Item>
+                    )}
+                />
+            </div>
+        );
+    }
     const datasetTemplatesData = [
         {
             text: "Select from torchvision dataset",
             component: [
                 <div>
-                    <Select
-                        showSearch
-                        style={{ width: 200 }}
-                        loading={!databaseLoaded}
-                        placeholder="Select a torchvision database"
-                        optionFilterProp="children"
-                        filterOption={filterOption}
-                        onChange={(v) => {
-                            setTorchvisionDatabaseName(v);
-                        }}
-                        options={databaseLoaded ? datasetOptions : []}
-                    />
+                    <Flex justify="center" gap={"middle"}>
+                        <Flex
+                            vertical
+                            align="flex-end"
+                            justify="space-between"
+                            style={{ padding: 32 }}
+                        >
+                            <Typography.Title level={3}>
+                                Please select a torchvision dataset
+                            </Typography.Title>
+                            <Select
+                                showSearch
+                                style={{ width: 200 }}
+                                loading={!databaseLoaded}
+                                placeholder="Select a torchvision database"
+                                optionFilterProp="children"
+                                filterOption={filterOption}
+                                value={torchvisionDatasetName}
+                                onChange={(v) => {
+                                    setTorchvisionDatasetName(v);
+                                }}
+                                options={databaseLoaded ? datasetOptions : []}
+                            />
+                        </Flex>
+                    </Flex>
                 </div>,
-                <div></div>,
+                <div>
+                    {torchvisionDatasetName !== "" ? (
+                        <Flex justify="center">
+                            <List
+                                style={{ width: "80%" }}
+                                size="large"
+                                header={
+                                    <Typography.Title level={4}>
+                                        Configure the target Dataset(
+                                        {targetTorchvisionDataset?.name})
+                                    </Typography.Title>
+                                }
+                                footer={<div></div>}
+                                bordered
+                                dataSource={
+                                    targetTorchvisionDatasetInitFuncParams!
+                                }
+                                renderItem={(param, i) => {
+                                    if (param.name.includes("transform")) {
+                                        return (
+                                            <div>
+                                                <Popover
+                                                    content={popOverContent(i)}
+                                                >
+                                                    <Button
+                                                        style={{
+                                                            width: "100%",
+                                                            display: "flex",
+                                                            flexDirection:
+                                                                "row",
+                                                            alignItems:
+                                                                "baseline",
+                                                            justifyContent:
+                                                                "space-between",
+                                                        }}
+                                                        prefix={param.name}
+                                                        size="large"
+                                                    >
+                                                        <div
+                                                            style={{
+                                                                textAlign:
+                                                                    "left",
+                                                            }}
+                                                        >
+                                                            {param.name}
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                textAlign:
+                                                                    "center",
+                                                            }}
+                                                        >
+                                                            Hang over to open
+                                                            the transform
+                                                            definition popover
+                                                        </div>
+                                                    </Button>
+                                                </Popover>
+                                            </div>
+                                        );
+                                    } else
+                                        return (
+                                            <div>
+                                                <Input
+                                                    prefix={param.name}
+                                                    size="large"
+                                                    placeholder={
+                                                        param.initial_value
+                                                    }
+                                                    onChange={(e) => {
+                                                        targetTorchvisionDatasetInitFuncValues[
+                                                            i
+                                                        ] = e.target.value;
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                }}
+                            />
+                        </Flex>
+                    ) : undefined}
+                </div>,
             ],
         },
         {
@@ -190,7 +358,7 @@ export default function DatasetPage() {
         },
         {
             title: "Last",
-            content: <div></div>,
+            content: <div>{datasetTemplatesData[checkedId]?.component[1]}</div>,
         },
     ];
     const stepItems = steps.map((item) => ({
