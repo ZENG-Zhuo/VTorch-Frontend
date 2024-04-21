@@ -6,7 +6,7 @@ import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
 import { ClassInfo } from "./common/pythonObjectTypes";
 import { jsonContent } from "./data";
-import { updateDatabase } from "./dataCom";
+import { updateDatabase } from "./communication";
 import { Database } from "./common/objectStorage";
 import { parse } from "path";
 

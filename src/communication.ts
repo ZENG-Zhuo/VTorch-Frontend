@@ -1,3 +1,4 @@
+import { DatasetInfo } from "./common/datasetTypes";
 import { Database } from "./common/objectStorage";
 
 const backEndUrl = "http://10.89.2.170:8001";
@@ -20,6 +21,45 @@ export function updateDatabase(callback: Function) {
                 callback();
             })
         );
+    });
+}
+
+export function setDatasetInfo(
+    name: string,
+    datasetInfo: DatasetInfo,
+    callback?: Function
+) {
+    fetch(backEndUrl + "/api/setDatasetInfo", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            name: name,
+            datasetInfo: JSON.stringify(datasetInfo.toJSON()),
+        }),
+    }).then((_) => {
+        console.log("set dataset sucess");
+        if (callback) callback();
+    });
+}
+
+export function getDatasetInfos(
+    setDatasetInfos: (datasets: Map<string, DatasetInfo>) => void
+) {
+    fetch(backEndUrl + "/api/getDatasetInfos", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+    }).then((data) => {
+        data.json().then((data) => {
+            const datasetInfos: Map<string, DatasetInfo> = new Map(data);
+            setDatasetInfos(datasetInfos);
+        });
     });
 }
 
@@ -50,12 +90,12 @@ export function register(
             username: userName,
             password: md5Password,
             email: "not implemented",
-            name: "not implemented"
+            name: "not implemented",
         }),
     });
 }
 
-export function login(userName: string, md5Password: string){
+export function login(userName: string, md5Password: string) {
     return fetch(backEndUrl + "/api/login", {
         method: "POST",
         headers: {
@@ -64,7 +104,7 @@ export function login(userName: string, md5Password: string){
         },
         body: JSON.stringify({
             username: userName,
-            password: md5Password
+            password: md5Password,
         }),
     });
 }

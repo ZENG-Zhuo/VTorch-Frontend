@@ -14,13 +14,18 @@ import {
     theme,
 } from "antd";
 import Title from "antd/es/typography/Title";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { Database } from "../../common/objectStorage";
-import { updateDatabase } from "../../dataCom";
+import {
+    getDatasetInfos,
+    setDatasetInfo,
+    updateDatabase,
+} from "../../communication";
 import { FileModuleNode, FolderModuleNode } from "../../common/pythonFileTypes";
 import { ClassInfo } from "../../common/pythonObjectTypes";
 import { transformsPopover } from "./TransformsPopover";
 import {
+    DatasetInfo,
     TabularDatasetInfo,
     TabularDatasetSetting,
     TabularSettingDefault,
@@ -41,7 +46,12 @@ class DatasetTemplate {
     }
 }
 
+export const DatasetContext = createContext<Map<string, DatasetInfo>>(
+    new Map()
+);
+
 export default function DatasetPage() {
+    const datasets = useContext(DatasetContext);
     const {
         token: {
             colorBgContainer,
@@ -53,8 +63,8 @@ export default function DatasetPage() {
     } = theme.useToken();
     const [current, setCurrent] = useState(0);
     const [checkedId, setCheckedId] = useState(-1);
-    const [databaseName, setDatabaseName] = useState("");
-    const [databaseLoaded, setDatabaseLoaded] = useState(
+    const [datasetName, setDatasetName] = useState("");
+    const [datasetLoaded, setDatasetLoaded] = useState(
         Database.packages.size > 0
     );
     const [torchvisionDatasetName, setTorchvisionDatasetName] = useState("");
@@ -69,9 +79,9 @@ export default function DatasetPage() {
     let torchvisionDatasets: FolderModuleNode | FileModuleNode | undefined;
     let torchvisionDatasetsClasses: Map<string, ClassInfo> = new Map();
     let transformsClasses: Map<string, ClassInfo> = new Map();
-    if (!databaseLoaded) {
+    if (!datasetLoaded) {
         updateDatabase(() => {
-            setDatabaseLoaded(true);
+            setDatasetLoaded(true);
         });
     } else {
         const torchvisionId = Database.findPackage("torchvision", "1.0.0");
@@ -164,7 +174,7 @@ export default function DatasetPage() {
                             <Select
                                 showSearch
                                 style={{ width: 200 }}
-                                loading={!databaseLoaded}
+                                loading={!datasetLoaded}
                                 placeholder="Select a torchvision database"
                                 optionFilterProp="children"
                                 filterOption={filterOption}
@@ -172,7 +182,7 @@ export default function DatasetPage() {
                                 onChange={(v) => {
                                     setTorchvisionDatasetName(v);
                                 }}
-                                options={databaseLoaded ? datasetOptions : []}
+                                options={datasetLoaded ? datasetOptions : []}
                             />
                         </Flex>
                     </Flex>
@@ -326,9 +336,9 @@ export default function DatasetPage() {
                             prefix="Dataset name"
                             size="large"
                             placeholder="CustomDataset"
-                            value={databaseName}
+                            value={datasetName}
                             onChange={(e) => {
-                                setDatabaseName(e.target.value);
+                                setDatasetName(e.target.value);
                             }}
                         ></Input>
                     </div>
@@ -370,8 +380,7 @@ export default function DatasetPage() {
 
     const next = () => {
         if (current === 0) {
-            if (checkedId !== -1 && databaseName !== "")
-                setCurrent(current + 1);
+            if (checkedId !== -1 && datasetName !== "") setCurrent(current + 1);
             else
                 messageApi.open({
                     key: msgKey,
@@ -437,20 +446,20 @@ export default function DatasetPage() {
                                         onClick={() => {
                                             switch (checkedId) {
                                                 case 0:
-                                                    console.log(
-                                                        "torchvision dataset: ",
+                                                    setDatasetInfo(
+                                                        datasetName,
                                                         new TorchvisionDatasetInfo(
-                                                            databaseName,
+                                                            datasetName,
                                                             torchvisionDatasetName,
                                                             targetTorchvisionDatasetInitFuncValues
                                                         )
                                                     );
                                                     break;
                                                 case 1:
-                                                    console.log(
-                                                        "tabular dataset: ",
+                                                    setDatasetInfo(
+                                                        datasetName,
                                                         new TabularDatasetInfo(
-                                                            databaseName,
+                                                            datasetName,
                                                             tabularSetting
                                                         )
                                                     );
