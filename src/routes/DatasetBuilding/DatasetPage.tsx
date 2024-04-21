@@ -51,7 +51,6 @@ export const DatasetContext = createContext<Map<string, DatasetInfo>>(
 );
 
 export default function DatasetPage() {
-    const datasets = useContext(DatasetContext);
     const {
         token: {
             colorBgContainer,

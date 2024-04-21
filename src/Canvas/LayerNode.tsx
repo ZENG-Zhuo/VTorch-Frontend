@@ -130,7 +130,8 @@ function InputTensor() {
         let targethandle = new TargetHandle("Tensor");
         targethandle.id = "input-" + nodeid + "-fwd-output-0";
         classdict[nodeid].targetHandles.push(targethandle);
-        classdict[nodeid].targetHandles[0].id = "input-" + nodeid + "-fwd-output-0";
+        classdict[nodeid].targetHandles[0].id =
+            "input-" + nodeid + "-fwd-output-0";
     }
 
     return (
@@ -150,7 +151,6 @@ function InputTensor() {
     );
 }
 
-
 function GroundTruthLabel() {
     let nodeid = useNodeId();
     let node_name = "";
@@ -164,14 +164,15 @@ function GroundTruthLabel() {
         let targethandle = new TargetHandle("Tensor");
         targethandle.id = "GTLabel-" + nodeid + "-fwd-output-0";
         classdict[nodeid].targetHandles.push(targethandle);
-        classdict[nodeid].targetHandles[0].id = "GTLabel-" + nodeid + "-fwd-output-0";
+        classdict[nodeid].targetHandles[0].id =
+            "GTLabel-" + nodeid + "-fwd-output-0";
     }
 
     return (
         <div className="const-node">
             <span className="Input Tensor">Ground Truth</span>
             {/* <Handle type="source" position={Position.Bottom} id="a" style={handleStyle} isConnectable={isConnectable}/> */}
-            <Handle 
+            <Handle
                 className="handle"
                 type="source"
                 position={Position.Right}
@@ -184,8 +185,6 @@ function GroundTruthLabel() {
     );
 }
 
-
-
 function OutputTensor() {
     let nodeid = useNodeId();
     let node_name = "output-" + nodeid;
@@ -195,8 +194,8 @@ function OutputTensor() {
     } else if (!(nodeid in classdict)) {
         node_name = "output-" + nodeid;
         let classInstance = new ClassInstance(node_name, nodeid);
-        let forward_handle = new SourceHandle("Tensor",node_name,true,"");
-        forward_handle.id = node_name + "-fwd-input-0"
+        let forward_handle = new SourceHandle("Tensor", node_name, true, "");
+        forward_handle.id = node_name + "-fwd-input-0";
         classInstance.forwardHandles.push(forward_handle);
         classdict[nodeid] = classInstance;
     }
@@ -236,7 +235,8 @@ function ParamToInput(
 
     let id_name: string = name as string;
     let id_key: string = key.toString();
-    paramHandle.id = moduleName + "-" + nodeid + "-data-" + id_name + "-" + id_key;
+    paramHandle.id =
+        moduleName + "-" + nodeid + "-data-" + id_name + "-" + id_key;
 
     return (
         <div key={name}>
@@ -254,7 +254,7 @@ function ParamToInput(
                 id={paramHandle.id}
                 position={Position.Left}
                 style={{
-                    top: (pre_length + 1) * 45.75 + 49.75 * (key) + 75,
+                    top: (pre_length + 1) * 45.75 + 49.75 * key + 75,
                 }}
                 isConnectable={true}
             />
@@ -268,7 +268,7 @@ function SourcesToInput(
     sourcesHandle: SourceHandle,
     key: number
 ) {
-    sourcesHandle = structuredClone(sourcesHandle)
+    sourcesHandle = structuredClone(sourcesHandle);
     let name = sourcesHandle.name;
     let initial_value = sourcesHandle.value;
 
@@ -339,16 +339,16 @@ function NNmoduleToDiv(module: Module) {
     const nodeId: string = nodeid;
     // console.log("output classdict data", classdict[nodeid]);
     // console.log(classdict[nodeid].paramsHandles.length)
-    let pure_paramHandles:ParamHandle[] = []
+    let pure_paramHandles: ParamHandle[] = [];
     classdict[nodeid].paramsHandles.map(
-        (paramHandle:ParamHandle, key:number) => {
-            if(paramHandle.param.name != 'self'){
-                pure_paramHandles.push(paramHandle)
+        (paramHandle: ParamHandle, key: number) => {
+            if (paramHandle.param.name != "self") {
+                pure_paramHandles.push(paramHandle);
             }
         }
-    )
+    );
 
-    classdict[nodeid].paramsHandles = structuredClone(pure_paramHandles)
+    classdict[nodeid].paramsHandles = structuredClone(pure_paramHandles);
 
     const initItems: CollapseProps["items"] = [
         {
@@ -382,12 +382,10 @@ function NNmoduleToDiv(module: Module) {
                 moduleName + "-" + nodeId + "-fwd-output-" + String(key);
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
-            if(nodeid){
+            if (nodeid) {
                 classdict[nodeid].targetHandles[key].id =
-                moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+                    moduleName + "-" + nodeId + "-fwd-output-" + String(key);
             }
-
-            
 
             return (
                 <Handle
@@ -413,23 +411,22 @@ function NNmoduleToDiv(module: Module) {
         }
     );
 
-
     const SourceHandlesComponent = classdict[nodeid].forwardHandles.map(
         (source_handle: SourceHandle, key: number) => {
             source_handle.id =
                 moduleName + "-" + nodeId + "-fwd-input-" + String(key);
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
-            if(nodeid){
+            if (nodeid) {
                 classdict[nodeid].forwardHandles[key].id =
-                moduleName + "-" + nodeId + "-fwd-input-" + String(key);
+                    moduleName + "-" + nodeId + "-fwd-input-" + String(key);
             }
-            let name = source_handle.name
+            let name = source_handle.name;
             let initial_value = "";
             const onChange = (evt: ChangeEvent<HTMLInputElement>) => {
                 console.log(evt.target.value);
                 source_handle.value = evt.target.value;
-            }
+            };
 
             return (
                 <div key={name}>
@@ -534,9 +531,8 @@ function getTensorNum(params: TypeInfo[]): [number, number] | "any" {
 function GenerateModuleFunction(
     classInfo: ClassInfo
 ): ComponentType<NodeProps> | undefined {
-    const initFunc = classInfo.functions.find(
-        (func) => func.name === "__init__"
-    );
+    const initFuncs = classInfo.getFunctions("__init__");
+    const initFunc = initFuncs.at(0);
     if (!initFunc) {
         throw new Error(`__init__ function not found in ClassInfo`);
     }
@@ -548,7 +544,8 @@ function GenerateModuleFunction(
     typeInfoU.map((t) => {
         if (t) typeInfos.push(t);
     });
-    const forwardFunc = classInfo.functions.find((f) => f.name === "forward");
+    const forwardFuncs = classInfo.getFunctions("forward");
+    const forwardFunc = forwardFuncs.at(0);
     if (forwardFunc) {
         // console.log("forward func info: ", forwardFunc);
     } else {
@@ -594,7 +591,6 @@ function GenerateModuleFunction(
 
         return newSourceHandle;
     });
-    
 
     let targetsHandle: TargetHandle[] = [];
     if (forwardFunc.return_type?.getType() == "Tuple") {
@@ -640,7 +636,13 @@ function GenerateModuleFunction(
     };
 }
 
-export { InputTensor, OutputTensor, GroundTruthLabel, GetClassDict, GenerateModuleFunction };
+export {
+    InputTensor,
+    OutputTensor,
+    GroundTruthLabel,
+    GetClassDict,
+    GenerateModuleFunction,
+};
 
 {
     /* <Handle

@@ -88,9 +88,7 @@ export default function App() {
                         if (
                             classInfo &&
                             modulesAll.includes(classInfo.name) &&
-                            classInfo.functions.find(
-                                (f) => f.name === "__init__"
-                            )
+                            classInfo.getFunctions("__init__").length > 0
                         )
                             importedClasses.set(alias, classInfo);
                     });
@@ -98,9 +96,7 @@ export default function App() {
                         if (
                             classInfo &&
                             modulesAll.includes(classInfo.name) &&
-                            classInfo.functions.find(
-                                (f) => f.name === "__init__"
-                            )
+                            classInfo.getFunctions("__init__").length > 0
                         )
                             importedClasses.set(classInfo.name, classInfo);
                     });
