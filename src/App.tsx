@@ -4,7 +4,7 @@ import Canvas from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
-import { ClassInfo } from "./common/pythonObjectTypes";
+import { ClassInfo, FuncInfo } from "./common/pythonObjectTypes";
 import { jsonContent } from "./data";
 import { updateDatabase } from "./communication";
 import { Database } from "./common/objectStorage";
@@ -58,6 +58,7 @@ export default function App() {
     const [parsedClassesWithInit, setParsedClasses] = useState<
         Map<string, ClassInfo> | undefined
     >(undefined);
+    const [functions, setFunctions] = useState<[string, FuncInfo[]][]>([]);
     if (!parsedClassesWithInit)
         updateDatabase(() => {
             const packageId = Database.findPackage("torch", "1.0.0");
@@ -66,6 +67,16 @@ export default function App() {
                     ["torch", "nn"],
                     false
                 );
+                const torchId = Database.getPackage(packageId).getSubModule(
+                    ["torch"],
+                    false
+                );
+                if (torchId) {
+                    const torch = Database.getNode(torchId);
+                    const torchFunctions = torch.getFunctions();
+                    setFunctions(torchFunctions.filter((f) => !f[0].startsWith("_")));
+                    console.log("functions detail1: ", functions);
+                } else throw "torch not found";
                 if (nodeId) {
                     const node = Database.getNode(nodeId);
                     const modulesNodeId = node.getSubModule(
@@ -109,15 +120,23 @@ export default function App() {
                 } else throw "torch.nn not found";
             } else throw "torch not found";
         });
+
+    console.log("functions detail2: ", functions);
     return (
         <div className="container">
             <ReactFlowProvider>
                 <div className="main">
                     {parsedClassesWithInit ? (
-                        <Sider modules={parsedClassesWithInit} />
+                        <Sider
+                            modules={parsedClassesWithInit}
+                            funcs={functions}
+                        />
                     ) : undefined}
                     {parsedClassesWithInit ? (
-                        <Canvas modules={parsedClassesWithInit} />
+                        <Canvas
+                            modules={parsedClassesWithInit}
+                            funcs={functions}
+                        />
                     ) : undefined}
                 </div>
             </ReactFlowProvider>

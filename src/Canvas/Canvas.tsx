@@ -24,8 +24,9 @@ import {
 import { FloatButton } from "antd";
 import { LeftOutlined } from "@ant-design/icons";
 import "./Canvas.css";
+import {FucModuleToDiv, GenerateFunc} from  './FucNodes';
 import { initialNodes, initialEdges } from "./defaultelements";
-import { ClassInfo } from "../common/pythonObjectTypes";
+import { ClassInfo, FuncInfo } from "../common/pythonObjectTypes";
 import { connect } from "http2";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
@@ -42,6 +43,7 @@ const getId = () => `node${++id}`;
 
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
+    funcs: [string, FuncInfo[]][];
 }
 // let moduleChanged: boolean = false;
 // export function setModuleChanged() {
@@ -66,6 +68,22 @@ function Canvas(props: CanvasProp) {
             if (moduleFunction) NodesTypes[name] = moduleFunction;
             // setNodesTypes(newNodes);
         });
+    }
+
+    const funcs = props.funcs;
+    if (funcs) {
+        funcs.forEach((funcinfo) => {
+            if (funcinfo[1].length == 1){
+                const funcModule = GenerateFunc(funcinfo[1][0])
+                if (funcModule) NodesTypes[funcinfo[0]] = funcModule
+            } else {
+                funcinfo[1].forEach((func,idx) => {
+                    const funcModule = GenerateFunc(funcinfo[1][idx])
+                    if (funcModule) NodesTypes[funcinfo[0]+'<'+String(idx+1)+'>'] = funcModule
+                })
+            }
+            
+        })
     }
 
     // console.log(reactFlowInstance);
@@ -235,6 +253,10 @@ function Canvas(props: CanvasProp) {
 
     const onNodesDelete = useCallback((nodes: Node[]) => {
         console.log("node info: ", nodes);
+        nodes.map((node: Node,idx: number)=>{
+            console.log(node.id)
+            delete classdict[node.id]
+        })
         
     },[])
 

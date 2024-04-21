@@ -50,7 +50,7 @@ class ParamHandle {
 }
 
 // input handle, one source can only acceplt one line input
-class SourceHandle {
+export class SourceHandle {
     //  handle id which connect
     source: string = "";
     // self id
@@ -75,7 +75,7 @@ class SourceHandle {
 }
 
 // output handle, one target handle can accept multiple lines
-class TargetHandle {
+export class TargetHandle {
     // handle target id that is connected
     targets: string[] = [];
     // target handle id itself

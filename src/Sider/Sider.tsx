@@ -10,7 +10,7 @@ import {
     GetClassDict,
     ClassInstance,
 } from "../Canvas/LayerNode";
-import { ClassInfo } from "../common/pythonObjectTypes";
+import { ClassInfo, FuncInfo } from "../common/pythonObjectTypes";
 import { Sidenav, Nav, Toggle } from "rsuite";
 import DashboardIcon from "@rsuite/icons/legacy/Dashboard";
 import GroupIcon from "@rsuite/icons/legacy/Group";
@@ -20,16 +20,19 @@ import { Database } from "../common/objectStorage";
 
 interface SiderProp {
     modules: Map<string, ClassInfo> | undefined;
+    funcs: [string, FuncInfo[]][];
 }
 
 function Sider(props: SiderProp) {
     let modules = props.modules;
+    let funcs = props.funcs;
     const BasicNodes = [
         // need type def here
         { type: "Input", data: { label: "input tensor" } },
         { type: "Output", data: { label: "output tensor" } },
         { type: "GroundTruth", data: { label: "Ground Truth"} },
     ];
+
     let NnNodes: Array<{ type: string; data: { label: string } }> = [];
     if (modules)
         Array.from(modules, (classNameAndInfo) => {
@@ -39,6 +42,31 @@ function Sider(props: SiderProp) {
                     data: { label: classNameAndInfo[0] },
                 });
         });
+
+    let funcNodes: Array<{ type: string; data: { label: string } }> = [];
+    console.log("func info ,",funcs)
+    if (funcs) {
+        funcs.forEach((func)=>{
+            console.log("func info", func)
+            if (func[1].length == 1){
+                funcNodes.push({
+                    type: func[0],
+                    data: { label: func[0] },
+                });
+            } else {
+                func[1].forEach((fc,idx)=>{
+                    let func_label = func[0] + '<' + String(idx+1) + '>'
+                    funcNodes.push({
+                        type: func_label,
+                        data: { label: func_label },
+                    });
+                })
+            }
+        })
+    }else {
+        console.log('func info fail to get')
+    }
+
     const onDragStart = (event: any, nodeType: any) => {
         console.log("output the nodetype");
         console.log(nodeType);
@@ -148,6 +176,32 @@ function Sider(props: SiderProp) {
                         >
                             <div className="nodes">
                                 {NnNodes?.map((x) => (
+                                    <Nav.Item>
+                                        <div
+                                            key={x.data.label}
+                                            className={classnames([
+                                                "sider-node",
+                                                x.data.label,
+                                            ])}
+                                            onDragStart={(event: any) =>
+                                                onDragStart(event, x.type)
+                                            }
+                                            draggable
+                                        >
+                                            {x.data.label}
+                                        </div>
+                                    </Nav.Item>
+                                ))}
+                            </div>
+                        </Nav.Menu>
+                        <Nav.Menu
+                            key="Func"
+                            placement="rightStart"
+                            title="FuncModule"
+                            icon={<MagicIcon />}
+                        >
+                            <div className="nodes">
+                                {funcNodes?.map((x) => (
                                     <Nav.Item>
                                         <div
                                             key={x.data.label}
