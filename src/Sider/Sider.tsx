@@ -28,6 +28,7 @@ function Sider(props: SiderProp) {
         // need type def here
         { type: "Input", data: { label: "input tensor" } },
         { type: "Output", data: { label: "output tensor" } },
+        { type: "GroundTruth", data: { label: "Ground Truth"} },
     ];
     let NnNodes: Array<{ type: string; data: { label: string } }> = [];
     if (modules)
@@ -56,57 +57,51 @@ function Sider(props: SiderProp) {
     }
 
     function OnClickButton() {
-        let nodes: { [key: string]: ClassInstance } = structuredClone(
+        let nodes = structuredClone(
             GetClassDict()
         );
 
-        // for (let key in nodes) {
-        //     if (String(nodes[key].name) == "input") {
-        //         nodes[key]["source"] = [];
-        //     }
-        //     if (String(nodes[key].name) == "output") {
-        //         nodes[key]["target"] = [];
-        //     }
-        // }
-
-        // edges.forEach((edge) => {
-        //     nodes[edge.target]["source"] = [];
-        //     nodes[edge.source]["target"] = [];
-        // });
-
-        edges.forEach((edge) => {
-            console.log(edge.id);
-            console.log(edge.targetHandle);
-            console.log(edge.sourceHandle);
-
-            let targetHandle = edge.targetHandle;
-            let sourceHandle = edge.sourceHandle;
-
-            if (
-                targetHandle!.substring(
-                    targetHandle!.length - 5,
-                    targetHandle!.length - 2
-                ) == "put"
-            ) {
-                // input and output, forward transfer
-                let source_key = edge.sourceHandle!.slice(-1);
-                let target_key = edge.targetHandle!.slice(-1);
-
-                nodes[edge.target].forwardHandles[Number(target_key)].source =
-                    String(edge.source);
-                nodes[edge.source].targetHandles[
-                    Number(source_key)
-                ].targets.push(String(edge.target));
-            } else {
-                // parameter transfer
-                let param_key = edge.targetHandle!.slice(-1);
-
-                nodes[edge.target].paramsHandles[Number(param_key)].source =
-                    edge.source;
-            }
-        });
+        console.log("nodes: ", nodes)
+        // let jsonObj:any = {}
+        // nodes.forEach((value:ClassInstance,key:string) => {
+        //     jsonObj[key] = value
+        // })
         var jsonData = JSON.stringify(nodes, null, "\t");
         console.log(jsonData);
+
+        // edges.forEach((edge) => {
+        //     console.log(edge.id);
+        //     console.log(edge.targetHandle);
+        //     console.log(edge.sourceHandle);
+
+        //     let targetHandle = edge.targetHandle;
+        //     let sourceHandle = edge.sourceHandle;
+
+        //     if (
+        //         targetHandle!.substring(
+        //             targetHandle!.length - 5,
+        //             targetHandle!.length - 2
+        //         ) == "put"
+        //     ) {
+        //         // input and output, forward transfer
+        //         let source_key = edge.sourceHandle!.slice(-1);
+        //         let target_key = edge.targetHandle!.slice(-1);
+
+        //         nodes[edge.target].forwardHandles[Number(target_key)].source =
+        //             String(edge.source);
+        //         nodes[edge.source].targetHandles[
+        //             Number(source_key)
+        //         ].targets.push(String(edge.target));
+        //     } else {
+        //         // parameter transfer
+        //         let param_key = edge.targetHandle!.slice(-1);
+
+        //         nodes[edge.target].paramsHandles[Number(param_key)].source =
+        //             edge.source;
+        //     }
+        // });
+        // var jsonData = JSON.stringify(nodes, null, "\t");
+        // console.log(jsonData);
     }
 
     return (

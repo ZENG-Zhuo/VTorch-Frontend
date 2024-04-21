@@ -1,10 +1,11 @@
-import React, {useState} from "react";
+import React, {CSSProperties, useState} from "react";
 import "./LoginPage.css"
-import {ExclamationCircleOutlined, LoginOutlined} from "@ant-design/icons";
+import {ExclamationCircleOutlined, LoginOutlined, GithubOutlined} from "@ant-design/icons";
 import { LeftOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Form, type FormProps, Input, FloatButton, message } from 'antd';
+import { Button, Checkbox, Form, type FormProps, Input, FloatButton, message, Divider } from 'antd';
 import { login } from "../../dataCom";
 import md5 from "md5";
+
 
 const LoginPage = () => {
 
@@ -72,7 +73,7 @@ const LoginPage = () => {
                     name="basic"
                     labelCol={{ span: 8 }}
                     wrapperCol={{ span: 16 }}
-                    style={{ maxWidth: 600 }}
+                    style={{ maxWidth: 600, alignItems: "center" }}
                     initialValues={{ remember: true }}
                     onFinish={onFinish}
                     onFinishFailed={onFinishFailed}
@@ -102,15 +103,21 @@ const LoginPage = () => {
                     <Checkbox>Remember me</Checkbox>
                     </Form.Item>
 
-                    <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                    <Button type="primary" htmlType="submit" href='/'> Login  </Button>
-                    <div> <br></br> </div>
-                    <Button type="primary" htmlType="submit" href='/RegisterPage'>Register</Button>
-                    </Form.Item>
+                    {/* <Form.Item wrapperCol={{ offset: 8, span: 16 }} style={{alignItems: "center"}}> */}
+                        <Button type="primary" htmlType="submit" href='/' style={{width:200}}> Login  </Button>
+                        <div> <br></br> </div>
+                        <Button type="primary" htmlType="submit" href='/RegisterPage' style={{width:200}}>Register</Button>
+                    {/* </Form.Item> */}
                 </Form>
+                <Divider plain>
+                    <span>contact us</span>
+                </Divider>
+                <a href="https://github.com/ZENG-Zhuo/VTorch-Frontend">
+                    <GithubOutlined style={{fontSize:25, verticalAlign:'middle'}} />
+                </a>
 
             </div>
-            <FloatButton href='/' icon={<LeftOutlined/> } />
+            <FloatButton href='/' icon={<LeftOutlined/> } /> 
         </div>
         </div>
         </>

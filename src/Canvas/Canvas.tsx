@@ -8,12 +8,16 @@ import ReactFlow, {
     Controls,
     NodeProps,
     MarkerType,
+    Connection,
+    Edge,
+    Node,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
 import {
     InputTensor,
     OutputTensor,
+    GroundTruthLabel,
     GetClassDict,
     GenerateModuleFunction,
 } from "./LayerNode";
@@ -22,12 +26,14 @@ import { LeftOutlined } from "@ant-design/icons";
 import "./Canvas.css";
 import { initialNodes, initialEdges } from "./defaultelements";
 import { ClassInfo } from "../common/pythonObjectTypes";
+import { connect } from "http2";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
 let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
     Input: InputTensor,
     Output: OutputTensor,
+    GroundTruth: GroundTruthLabel,
     // BatchNorm2D: BatchNorm2D
 };
 
@@ -109,31 +115,64 @@ function Canvas(props: CanvasProp) {
         [reactFlowInstance]
     );
 
-    const onConnect = useCallback((connection: any): any => {
+    const onConnect = useCallback((connection: Connection) => {
         // console.log(connection)
         const { source, sourceHandle, target, targetHandle } = connection;
-        let src_num: any = source.slice(4);
-        let tag_num: any = target.slice(4);
+        let src_num = source!.slice(4);
+        let tag_num = target!.slice(4);
 
-        console.log("sourceHandle: ", sourceHandle);
-        console.log("targetHandle: ", targetHandle);
+        let source_info = sourceHandle!.split("-");
+        let target_info = targetHandle!.split("-");
+
+        console.log("edge info: ", source, sourceHandle, target, targetHandle);
+
+        let src_node_id = source_info[1];
+        let tgt_node_id = target_info[1];
+        let src_node_key = Number(source_info[source_info.length-1]);
+        let tgt_node_key = Number(target_info[target_info.length-1]);
+
 
         let edge_id: string;
+        let edge_color:string;
 
-        if (
-            targetHandle.substring(
-                targetHandle.length - 3,
-                targetHandle.length
-            ) == "put"
-        ) {
+        if (target_info[2] == "fwd") {
             edge_id = `edge${src_num}-${tag_num}_flow`;
+            edge_color = "#000000"
+
+            console.log("connect edge of forward");
+            
+            // console.log("classdict: ",classdict[tgt_node_id], src_node_key)
+            const tgt_to_src_id = classdict[tgt_node_id].forwardHandles[tgt_node_key].id;
+            console.log("tgt_to_src_id ",tgt_to_src_id )
+            if (tgt_to_src_id) {
+                classdict[src_node_id].targetHandles[src_node_key].targets.push(
+                    tgt_to_src_id
+                );
+                console.log(classdict[src_node_id])
+            }
+
+            const src_to_tgt_id = classdict[src_node_id].targetHandles[src_node_key].id
+            console.log("src_to_tgt_id ",src_to_tgt_id)
+            if (src_to_tgt_id){
+                classdict[tgt_node_id].forwardHandles[tgt_node_key].source = src_to_tgt_id
+            }
+
         } else {
-            let key_id: string = targetHandle.substring(
-                targetHandle.length - 1,
-                targetHandle.length
+            console.log("connect edge of data");
+            let key_id: string = targetHandle!.substring(
+                targetHandle!.length - 1,
+                targetHandle!.length
             );
             edge_id = `edge${src_num}-${tag_num}_data_${key_id}`;
+            edge_color = "#FF0072"
+
+            if(source && target && sourceHandle && targetHandle){
+                classdict[source].targetHandles[src_node_key].targets.push(targetHandle)
+                classdict[target].paramsHandles[tgt_node_key].source = sourceHandle
+            }
         }
+        console.log(sourceHandle);
+        console.log(targetHandle)
 
         const newEdge: any = {
             id: edge_id,
@@ -142,17 +181,62 @@ function Canvas(props: CanvasProp) {
             target,
             targetHandle,
             // type: 'customEdge',
-            style: { strokeWidth: 3 },
+            style: { strokeWidth: 3,stroke: edge_color },
             markerEnd: {
                 type: MarkerType.ArrowClosed,
+                color: edge_color
             },
         };
         setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
     }, []);
 
-    const onEdgesDelete = useCallback((edges: any): any => {
-        console.log(edges);
+    const onEdgesDelete = useCallback((edges: Edge[]) => {
+        console.log("edge info: ",edges);
+        edges.forEach(
+            function(edge){
+                const {source, sourceHandle, target, targetHandle} = edge
+
+                let source_info = sourceHandle!.split("-");
+                let target_info = targetHandle!.split("-");
+
+                let src_node_id = source_info[1];
+                let tgt_node_id = target_info[1];
+                let src_handle_key = Number(source_info[source_info.length-1]);
+                let tgt_handle_key = Number(target_info[target_info.length-1]);
+
+                // console.log("sourceHandle: ", source_info);
+                // console.log("targetHandle: ", target_info);
+                if(target_info[2] == 'fwd'){
+                    console.log('delete edge of forward')
+                    let src_targets = classdict[source].targetHandles[src_handle_key].targets
+                    src_targets.map( (item,index) => {
+                        if(item == targetHandle){
+                            src_targets.splice(index,1)
+                        }
+                    }
+                    )
+                    classdict[target].forwardHandles[tgt_handle_key].source = ""
+                }else if(target_info[2] == 'data'){
+                    console.log('delete edge of data');
+                    let src_targets = classdict[source].targetHandles[src_handle_key].targets
+                    src_targets.map( (item,index) => {
+                        if(item == targetHandle){
+                            src_targets.splice(index,1)
+                        }
+                    }
+                    )
+                    classdict[target].paramsHandles[tgt_handle_key].source = ""
+                }
+                
+            }
+        )
+        
     }, []);
+
+    const onNodesDelete = useCallback((nodes: Node[]) => {
+        console.log("node info: ", nodes);
+        
+    },[])
 
     return (
         <div className="canvas" ref={reactFlowWrapper}>
@@ -160,6 +244,7 @@ function Canvas(props: CanvasProp) {
                 edges={edges}
                 nodes={nodes}
                 onNodesChange={onNodesChange}
+                onNodesDelete={onNodesDelete}
                 onEdgesChange={onEdgesChange}
                 onEdgesDelete={onEdgesDelete}
                 onConnect={onConnect}

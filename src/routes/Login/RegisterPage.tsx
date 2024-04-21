@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./RegisterPage.css";
-import { ExclamationCircleOutlined, LoginOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, GithubOutlined, LoginOutlined } from "@ant-design/icons";
 import { LeftOutlined } from "@ant-design/icons";
 import {
     Button,
@@ -10,6 +10,7 @@ import {
     Input,
     FloatButton,
     message,
+    Divider,
 } from "antd";
 import { register } from "../../dataCom";
 import md5 from "md5";
@@ -140,10 +141,9 @@ const RegisterPage = () => {
                                 wrapperCol={{ offset: 8, span: 16 }}
                             >
                                 <Checkbox>Auto Login after Register</Checkbox>
-                            </Form.Item>
+                            </Form.Item> 
 
-                            <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                                <Button type="primary" htmlType="submit">
+                                <Button type="primary" htmlType="submit" style={{width:200}}>
                                     {" "}
                                     Register{" "}
                                 </Button>
@@ -155,12 +155,18 @@ const RegisterPage = () => {
                                     type="primary"
                                     htmlType="submit"
                                     href="/LoginPage"
+                                    style={{width:200}}
                                 >
                                     {" "}
                                     Login{" "}
                                 </Button>
-                            </Form.Item>
                         </Form>
+                        <Divider plain>
+                            <span>contact us</span>
+                        </Divider>
+                        <a href="https://github.com/ZENG-Zhuo/VTorch-Frontend">
+                            <GithubOutlined style={{fontSize:25, verticalAlign:'middle'}} />
+                        </a>
                     </div>
                     <FloatButton href="/" icon={<LeftOutlined />} />
                 </div>
