@@ -1,12 +1,10 @@
 import {
-    Breadcrumb,
     Button,
     Card,
     Flex,
     Input,
     Layout,
     List,
-    Menu,
     Popover,
     Select,
     Steps,
@@ -15,22 +13,22 @@ import {
     message,
     theme,
 } from "antd";
-import Text from "antd/es/typography/Text";
 import Title from "antd/es/typography/Title";
-import { cpuUsage } from "process";
 import { useState } from "react";
-import { UnaryExpression } from "typescript";
 import { Database } from "../../common/objectStorage";
 import { updateDatabase } from "../../dataCom";
 import { FileModuleNode, FolderModuleNode } from "../../common/pythonFileTypes";
 import { ClassInfo } from "../../common/pythonObjectTypes";
-import { PlusOutlined } from "@ant-design/icons";
+import { transformsPopover } from "./TransformsPopover";
+import {
+    TabularDatasetInfo,
+    TabularDatasetSetting,
+    TabularSettingDefault,
+    TorchvisionDatasetInfo,
+    TransformInstance,
+} from "../../common/datasetTypes";
+import { TabularConfigurePage, TabularFilePathPage } from "./TabularDataset";
 const { Content, Footer, Header } = Layout;
-const items = new Array(0).fill(null).map((_, index) => ({
-    key: index + 1,
-    label: `nav ${index + 1}`,
-}));
-
 const gridStyle: React.CSSProperties = {
     width: "50%",
     textAlign: "center",
@@ -42,11 +40,6 @@ class DatasetTemplate {
         this.text = text;
     }
 }
-
-type TransformInstance = {
-    name: string;
-    parameters: string[];
-};
 
 export default function DatasetPage() {
     const {
@@ -64,11 +57,18 @@ export default function DatasetPage() {
     const [databaseLoaded, setDatabaseLoaded] = useState(
         Database.packages.size > 0
     );
-    const [popoverChange, setPopoverChange] = useState(true);
     const [torchvisionDatasetName, setTorchvisionDatasetName] = useState("");
+    const [transformName, setTransformName] = useState("");
+    const [
+        targetTorchvisionDatasetInitFuncValues,
+        setTargetTorchvisionDatasetInitFuncValues,
+    ] = useState<(string | TransformInstance[] | undefined)[]>([]);
+    const [tabularSetting, setTarbularSetting] =
+        useState<TabularDatasetSetting>(TabularSettingDefault);
     let datasetOptions: { value: string; label: string }[] = [];
     let torchvisionDatasets: FolderModuleNode | FileModuleNode | undefined;
     let torchvisionDatasetsClasses: Map<string, ClassInfo> = new Map();
+    let transformsClasses: Map<string, ClassInfo> = new Map();
     if (!databaseLoaded) {
         updateDatabase(() => {
             setDatabaseLoaded(true);
@@ -98,6 +98,26 @@ export default function DatasetPage() {
                 console.log(Database.packages);
                 throw "torchviison.datasets not loaded";
             }
+            const transformsId = torchvision.getSubModule(
+                ["torchvision", "transforms"],
+                false
+            );
+            if (transformsId) {
+                const transformsPackage = Database.getNode(transformsId);
+                transformsPackage.classes.map((c) => {
+                    transformsClasses.set(c.name, c);
+                });
+                Array.from(transformsPackage.importedClasses, (entry) => {
+                    const classFound = transformsPackage!.getClass(entry[0]);
+                    if (classFound) {
+                        transformsClasses.set(entry[0], classFound);
+                    } else {
+                        throw "Invalid import info: " + entry[0];
+                    }
+                });
+            } else {
+                throw "torchvision.transforms not found";
+            }
         } else throw "torchvision not loaded!";
         datasetOptions = Array.from(
             torchvisionDatasetsClasses,
@@ -120,62 +140,12 @@ export default function DatasetPage() {
         targetTorchvisionDataset?.functions
             .find((f) => f.name === "__init__")
             ?.parameters.slice(1);
-    const targetTorchvisionDatasetInitFuncValues: (
-        | string
-        | TransformInstance[]
-        | undefined
-    )[] = [];
-    targetTorchvisionDatasetInitFuncParams?.forEach(() => {
-        targetTorchvisionDatasetInitFuncValues.push(undefined);
-    });
-    console.log("Params: ", targetTorchvisionDatasetInitFuncParams);
 
-    function popOverContent(paramId: number) {
-        if (targetTorchvisionDatasetInitFuncValues[paramId] === undefined) {
-            targetTorchvisionDatasetInitFuncValues[paramId] =
-                [] as TransformInstance[];
-        }
-        const param = targetTorchvisionDatasetInitFuncValues[paramId];
+    if (targetTorchvisionDatasetInitFuncValues.length === 0)
+        targetTorchvisionDatasetInitFuncParams?.forEach(() => {
+            targetTorchvisionDatasetInitFuncValues.push(undefined);
+        });
 
-        const transformInstances = param as TransformInstance[];
-        return (
-            <div>
-                <List
-                    size="large"
-                    header={<div>Header</div>}
-                    footer={
-                        <div>
-                            <Button
-                                style={{ width: "100%" }}
-                                size="large"
-                                onClick={() => {
-                                    transformInstances.push({
-                                        name: "new",
-                                        parameters: [],
-                                    });
-                                    setPopoverChange(!popoverChange);
-                                    console.log("transforms: ",
-                                        transformInstances
-                                    );
-                                }}
-                            >
-                                <PlusOutlined />
-                            </Button>
-                        </div>
-                    }
-                    bordered
-                    dataSource={
-                        popoverChange ? transformInstances : transformInstances
-                    }
-                    renderItem={(item) => (
-                        <List.Item>
-                            <div>{item.name}</div>
-                        </List.Item>
-                    )}
-                />
-            </div>
-        );
-    }
     const datasetTemplatesData = [
         {
             text: "Select from torchvision dataset",
@@ -229,7 +199,29 @@ export default function DatasetPage() {
                                         return (
                                             <div>
                                                 <Popover
-                                                    content={popOverContent(i)}
+                                                    content={transformsPopover(
+                                                        targetTorchvisionDatasetInitFuncValues[
+                                                            i
+                                                        ],
+                                                        (newTransforms) => {
+                                                            setTargetTorchvisionDatasetInitFuncValues(
+                                                                (prev) => {
+                                                                    const newValues =
+                                                                        [
+                                                                            ...prev,
+                                                                        ];
+                                                                    newValues[
+                                                                        i
+                                                                    ] =
+                                                                        newTransforms;
+                                                                    return newValues;
+                                                                }
+                                                            );
+                                                        },
+                                                        transformsClasses,
+                                                        transformName,
+                                                        setTransformName
+                                                    )}
                                                 >
                                                     <Button
                                                         style={{
@@ -293,7 +285,15 @@ export default function DatasetPage() {
         },
         {
             text: "Build your own tabular dataset",
-            component: [<div></div>, <div></div>],
+            component: [
+                TabularFilePathPage(tabularSetting.filePath, (filePath) => {
+                    setTarbularSetting((prev) => ({
+                        ...prev,
+                        ["filePath"]: filePath,
+                    }));
+                }),
+                TabularConfigurePage(tabularSetting, setTarbularSetting),
+            ],
         },
         {
             text: "Build your own image classification dataset",
@@ -383,6 +383,7 @@ export default function DatasetPage() {
     };
 
     const prev = () => {
+        setTargetTorchvisionDatasetInitFuncValues([]);
         setCurrent(current - 1);
     };
     const contentStyle: React.CSSProperties = {
@@ -399,15 +400,9 @@ export default function DatasetPage() {
             {contextHolder}
             <div>
                 <Layout>
-                    <Header style={{ display: "flex", alignItems: "center" }}>
-                        <div className="demo-logo" />
-                        <Menu
-                            theme="dark"
-                            mode="horizontal"
-                            items={items}
-                            style={{ flex: 1, minWidth: 0 }}
-                        />
-                    </Header>
+                    <Header
+                        style={{ display: "flex", alignItems: "center" }}
+                    ></Header>
                     <Content
                         style={{ padding: "0 48px", alignItems: "center" }}
                     >
@@ -437,7 +432,34 @@ export default function DatasetPage() {
                                     </Button>
                                 )}
                                 {current === steps.length - 1 && (
-                                    <Button type="primary" onClick={() => {}}>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => {
+                                            switch (checkedId) {
+                                                case 0:
+                                                    console.log(
+                                                        "torchvision dataset: ",
+                                                        new TorchvisionDatasetInfo(
+                                                            databaseName,
+                                                            torchvisionDatasetName,
+                                                            targetTorchvisionDatasetInitFuncValues
+                                                        )
+                                                    );
+                                                    break;
+                                                case 1:
+                                                    console.log(
+                                                        "tabular dataset: ",
+                                                        new TabularDatasetInfo(
+                                                            databaseName,
+                                                            tabularSetting
+                                                        )
+                                                    );
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }}
+                                    >
                                         Done
                                     </Button>
                                 )}
@@ -453,8 +475,8 @@ export default function DatasetPage() {
                         </div>
                     </Content>
                     <Footer style={{ textAlign: "center" }}>
-                        VTorch {new Date().getFullYear()} Created by HKUST
-                        student
+                        VTorch {new Date().getFullYear()} Created by LPDAN1 FYP
+                        group
                     </Footer>
                 </Layout>
             </div>
