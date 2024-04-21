@@ -3,7 +3,7 @@ import "./LoginPage.css"
 import {ExclamationCircleOutlined, LoginOutlined, GithubOutlined} from "@ant-design/icons";
 import { LeftOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Form, type FormProps, Input, FloatButton, message, Divider } from 'antd';
-import { login } from "../../dataCom";
+import { login } from "../../communication";
 import md5 from "md5";
 
 

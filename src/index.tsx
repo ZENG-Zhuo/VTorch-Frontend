@@ -23,7 +23,11 @@ import RegisterPage from "./routes/Login/RegisterPage";
 import HomePage from "./routes/HomePage/HomePage.jsx";
 import { error } from "console";
 import TestPage from "./routes/TestPage";
-import DatasetPage from "./routes/DatasetBuilding/DatasetPage";
+import DatasetPage, {
+    DatasetContext,
+} from "./routes/DatasetBuilding/DatasetPage";
+import CodeGenerationPage from "./routes/CodeGeneration/CodeGenerationPage";
+import { DatasetInfo } from "./common/datasetTypes";
 
 const router = createBrowserRouter([
     {
@@ -61,11 +65,20 @@ const router = createBrowserRouter([
         element: <DatasetPage />,
         errorElement: <ErrorPage />,
     },
+    {
+        path: "/codeGeneration",        
+        element: <CodeGenerationPage />,
+        errorElement: <ErrorPage />,
+    },
 ]);
+
+const datasets: Map<string, DatasetInfo> = new Map();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-        <RouterProvider router={router} />
+        <DatasetContext.Provider value={datasets}>
+            <RouterProvider router={router} />
+        </DatasetContext.Provider>
     </React.StrictMode>
 );
 

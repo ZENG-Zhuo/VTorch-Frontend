@@ -12,7 +12,7 @@ import {
     message,
     Divider,
 } from "antd";
-import { register } from "../../dataCom";
+import { register } from "../../communication";
 import md5 from "md5";
 
 const RegisterPage = () => {
