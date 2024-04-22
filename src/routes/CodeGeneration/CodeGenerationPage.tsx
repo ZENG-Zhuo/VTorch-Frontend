@@ -43,6 +43,10 @@ export default function CodeGenerationPage() {
     const [databaseLoaded, setDatabaseLoaded] = useState(
         Database.packages.size > 0
     );
+    const [dataloaderClass, setDataloaderClass] = useState<
+        ClassInfo | undefined
+    >(undefined);
+    const [dataloaderParams, setDataloaderParams] = useState<string[]>([]);
     const filterOption = (
         input: string,
         option?: { label: string; value: string }
@@ -53,6 +57,30 @@ export default function CodeGenerationPage() {
     let optimizers: Map<string, ClassInfo> = new Map();
     if (!databaseLoaded) {
         updateDatabase(() => {
+            const trochId = Database.findPackage("torch", "1.0.0");
+            if (trochId) {
+                const torch = Database.getPackage(trochId);
+                const utilsDataId = torch.getSubModule(
+                    ["torch", "utils", "data"],
+                    false
+                );
+                if (utilsDataId) {
+                    const utilsData = Database.getNode(utilsDataId);
+                    const dataLoader = utilsData.getClass("DataLoader");
+                    if (dataLoader) {
+                        setDataloaderClass(dataLoader);
+                        const __init__ = dataLoader.getFunctions("__init__");
+                        if (__init__.length === 0) {
+                            throw "dataloader has no init function!";
+                        }
+                        setDataloaderParams(
+                            Array(__init__[0].parameters.length - 2).fill("")
+                        );
+                    } else {
+                        throw "DataLoader not found!";
+                    }
+                } else throw "torch.utils.data not found!";
+            }
             setDatabaseLoaded(true);
         });
     } else {
@@ -97,7 +125,7 @@ export default function CodeGenerationPage() {
 
                                 <Flex vertical gap={"large"}>
                                     <div>
-                                        Dataset:
+                                        Train Dataset:
                                         <Select
                                             showSearch
                                             style={{ width: 200 }}
@@ -227,6 +255,56 @@ export default function CodeGenerationPage() {
                                 />
                             </Col>
                             <Col span={8}>
+                                <Title level={5}>
+                                    Configure your dataloader
+                                </Title>
+                                <List
+                                    style={{ width: "80%" }}
+                                    size="large"
+                                    loading={!dataloaderClass}
+                                    header={
+                                        <Typography.Title level={4}>
+                                            Configure the DataLoader
+                                        </Typography.Title>
+                                    }
+                                    footer={<div></div>}
+                                    bordered
+                                    dataSource={
+                                        dataloaderClass
+                                            ? dataloaderClass
+                                                  .getFunctions("__init__")[0]
+                                                  .parameters.slice(2)
+                                            : ([] as ParameterInfo[])
+                                    }
+                                    renderItem={(param, i) => {
+                                        return (
+                                            <Input
+                                                prefix={param.name}
+                                                size="large"
+                                                placeholder={
+                                                    param.initial_value
+                                                }
+                                                value={
+                                                    optimizerInfo.parameters[i]
+                                                }
+                                                onChange={(e) => {
+                                                    setOptimizerInfo((prev) => {
+                                                        const newParam = [
+                                                            ...prev.parameters,
+                                                        ];
+                                                        newParam[i] =
+                                                            e.target.value;
+                                                        return {
+                                                            ...prev,
+                                                            ["parameters"]:
+                                                                newParam,
+                                                        };
+                                                    });
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
                                 <Button size="large">
                                     <Title level={5}>
                                         Generate your custom model

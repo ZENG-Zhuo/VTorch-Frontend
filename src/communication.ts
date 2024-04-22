@@ -1,3 +1,4 @@
+import { UDBData } from "./common/UDBTypes";
 import { DatasetInfo } from "./common/datasetTypes";
 import { Database } from "./common/objectStorage";
 
@@ -107,5 +108,16 @@ export function login(userName: string, md5Password: string) {
             username: userName,
             password: md5Password,
         }),
+    });
+}
+
+export function addUDB(data: UDBData): Promise<Response> {
+    return fetch(backEndUrl + "/api/addUDB", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
     });
 }

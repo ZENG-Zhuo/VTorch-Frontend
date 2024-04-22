@@ -28,6 +28,7 @@ import DatasetPage, {
 } from "./routes/DatasetBuilding/DatasetPage";
 import CodeGenerationPage from "./routes/CodeGeneration/CodeGenerationPage";
 import { DatasetInfo } from "./common/datasetTypes";
+import { UDBPage } from "./routes/UserDefinedModelPage/UserDefinedModelPage";
 
 const router = createBrowserRouter([
     {
@@ -66,8 +67,13 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
     },
     {
-        path: "/codeGeneration",        
+        path: "/codeGeneration",
         element: <CodeGenerationPage />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "/UDB",
+        element: <UDBPage />,
         errorElement: <ErrorPage />,
     },
 ]);
