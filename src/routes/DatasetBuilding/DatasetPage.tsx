@@ -33,6 +33,7 @@ import {
     TransformInstance,
 } from "../../common/datasetTypes";
 import { TabularConfigurePage, TabularFilePathPage } from "./TabularDataset";
+import { Link } from "react-router-dom";
 const { Content, Footer, Header } = Layout;
 const gridStyle: React.CSSProperties = {
     width: "50%",
@@ -431,6 +432,7 @@ export default function DatasetPage() {
                                 {steps[current].content}
                             </div>
                             <div style={{ marginTop: 24 }}>
+                                <Link to={"/homePage"}><Button>Back to homePage</Button></Link>
                                 {current < steps.length - 1 && (
                                     <Button
                                         type="primary"

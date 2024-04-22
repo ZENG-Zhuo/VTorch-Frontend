@@ -14,7 +14,7 @@ const pageData = [
     title: 'DataLoader Design',
     content: 'Design your dataloader to transform the row data into tensor',
     links: [
-      <a key="2" href="/modelPage">Design DataLoader<Icon type="right" /></a>,
+      <a key="2" href="/dataset">Design DataLoader<Icon type="right" /></a>,
     ],
     Bg: Tetris,
   },
