@@ -28,9 +28,9 @@ function Sider(props: SiderProp) {
     let funcs = props.funcs;
     const BasicNodes = [
         // need type def here
-        { type: "Input", data: { label: "input tensor", submodule: ["kysten"] } },
-        { type: "Output", data: { label: "output tensor", submodule: ["kysten"] } },
-        { type: "GroundTruth", data: { label: "Ground Truth", submodule: ["kysten"]} },
+        { type: "Input", data: { label: "Input", submodule: ["kysten"] } },
+        { type: "Output", data: { label: "Output", submodule: ["kysten"] } },
+        { type: "GroundTruth", data: { label: "GroundTruth", submodule: ["kysten"]} },
     ];
 
     let NnNodes: Array<{ type: string; data: { label: string, submodule: string[] } }> = [];
