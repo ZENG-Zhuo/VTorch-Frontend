@@ -6,6 +6,8 @@ import { Collapse } from "antd";
 import { NodeId } from "../common/pythonFileTypes";
 import { connect } from "http2";
 
+const backEndUrl = "http://192.168.8.17:8001";
+
 class Param {
     name: string;
     initial_value: string = "";
@@ -228,15 +230,32 @@ function ParamToInput(
     // console.log(name)
     let initial_value = paramHandle.param.initial_value;
 
-    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
-        console.log(evt.target.value);
-        paramHandle.param.value = evt.target.value;
-    }, []);
-
+    
     let id_name: string = name as string;
     let id_key: string = key.toString();
     paramHandle.id =
         moduleName + "-" + nodeid + "-data-" + id_name + "-" + id_key;
+
+
+    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
+        console.log(evt.target.value);
+        paramHandle.param.value = evt.target.value;
+
+        fetch(backEndUrl + "/api/changeArguement", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                target: paramHandle.id,
+                value: evt.target.value,
+            }),
+        }).then((data) => {
+            console.log(data.text())
+        }).catch(e=>console.log(e));
+    }, []);
+    
 
     return (
         <div key={name}>

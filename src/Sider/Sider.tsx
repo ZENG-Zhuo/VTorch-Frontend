@@ -28,49 +28,50 @@ function Sider(props: SiderProp) {
     let funcs = props.funcs;
     const BasicNodes = [
         // need type def here
-        { type: "Input", data: { label: "input tensor" } },
-        { type: "Output", data: { label: "output tensor" } },
-        { type: "GroundTruth", data: { label: "Ground Truth"} },
+        { type: "Input", data: { label: "input tensor", submodule: ["kysten"] } },
+        { type: "Output", data: { label: "output tensor", submodule: ["kysten"] } },
+        { type: "GroundTruth", data: { label: "Ground Truth", submodule: ["kysten"]} },
     ];
 
-    let NnNodes: Array<{ type: string; data: { label: string } }> = [];
+    let NnNodes: Array<{ type: string; data: { label: string, submodule: string[] } }> = [];
     if (modules)
         Array.from(modules, (classNameAndInfo) => {
             if (classNameAndInfo[1].functions.find((f) => f.name === "forward"))
                 NnNodes.push({
                     type: classNameAndInfo[0],
-                    data: { label: classNameAndInfo[0] },
+                    data: { label: classNameAndInfo[0], submodule: ["torch", "nn"] },
                 });
         });
 
-    let funcNodes: Array<{ type: string; data: { label: string } }> = [];
-    console.log("func info ,",funcs)
+    let funcNodes: Array<{ type: string; data: { label: string, submodule: string[] } }> = [];
+    // console.log("func info ,",funcs)
     if (funcs) {
         funcs.forEach((func)=>{
-            console.log("func info", func)
+            // console.log("func info", func)
             if (func[1].length == 1){
                 funcNodes.push({
                     type: func[0],
-                    data: { label: func[0] },
+                    data: { label: func[0], submodule: ["torch"] },
                 });
             } else {
                 func[1].forEach((fc,idx)=>{
                     let func_label = func[0] + '<' + String(idx+1) + '>'
                     funcNodes.push({
                         type: func_label,
-                        data: { label: func_label },
+                        data: { label: func_label, submodule: ["torch"] },
                     });
                 })
             }
         })
     }else {
-        console.log('func info fail to get')
+        // console.log('func info fail to get')
     }
 
-    const onDragStart = (event: any, nodeType: any) => {
+    const onDragStart = (event: any, data: any) => {
         console.log("output the nodetype");
-        console.log(nodeType);
-        event.dataTransfer.setData("application/reactflow", nodeType);
+        // console.log("drag the data:",data);
+        event.dataTransfer.setData("application/reactflow", data.label);
+        event.dataTransfer.setData("application/reactflow2",data.submodule);
         event.dataTransfer.effectAllowed = "move";
     };
 
@@ -158,7 +159,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.type)
+                                                onDragStart(event, x.data)
                                             }
                                             draggable
                                         >
@@ -184,7 +185,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.type)
+                                                onDragStart(event, x.data)
                                             }
                                             draggable
                                         >
@@ -210,7 +211,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.type)
+                                                onDragStart(event, x.data)
                                             }
                                             draggable
                                         >

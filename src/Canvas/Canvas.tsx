@@ -37,6 +37,7 @@ let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
     GroundTruth: GroundTruthLabel,
     // BatchNorm2D: BatchNorm2D
 };
+const backEndUrl = "http://192.168.8.17:8001";
 
 let id = initialNodes.length;
 const getId = () => `node${++id}`;
@@ -110,8 +111,13 @@ function Canvas(props: CanvasProp) {
 
             const reactFlowBounds =
                 reactFlowWrapper?.current?.getBoundingClientRect();
-            const type = event.dataTransfer.getData("application/reactflow");
+            const type:string = event.dataTransfer.getData("application/reactflow");
+            const submodule:string = event.dataTransfer.getData("application/reactflow2")
+            const subModule:string[] = submodule.split(',')
 
+            // let type = type.label
+            console.log("get submodule data here:", subModule)
+            console.log("type is: ", type)
             // check if the dropped element is valid
             if (typeof type === "undefined" || !type) {
                 return;
@@ -127,6 +133,22 @@ function Canvas(props: CanvasProp) {
                 position,
                 data: { label: `${type} node` },
             };
+            // console.log("type =",type)
+
+            fetch(backEndUrl + "/api/addBlock", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: newNode.id,
+                    name: newNode.type,
+                    submodule: ["torch","nn"]
+                }),
+            }).then((data) => {
+                console.log(data.text())
+            }).catch(e=>console.log(e));
 
             setNodes((nds: any) => nds.concat(newNode));
         },
@@ -149,9 +171,22 @@ function Canvas(props: CanvasProp) {
         let src_node_key = Number(source_info[source_info.length-1]);
         let tgt_node_key = Number(target_info[target_info.length-1]);
 
-
         let edge_id: string;
         let edge_color:string;
+
+        fetch(backEndUrl + "/api/addEdge", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                source: sourceHandle,
+                target: targetHandle,
+            }),
+        }).then((data) => {
+            console.log(data.text())
+        });
 
         if (target_info[2] == "fwd") {
             edge_id = `edge${src_num}-${tag_num}_flow`;
@@ -222,6 +257,20 @@ function Canvas(props: CanvasProp) {
                 let src_handle_key = Number(source_info[source_info.length-1]);
                 let tgt_handle_key = Number(target_info[target_info.length-1]);
 
+                fetch(backEndUrl + "/api/delEdge", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        source: sourceHandle,
+                        target: targetHandle
+                    }),
+                }).then((data) => {
+                    console.log(data.text())
+                }).catch(e=>console.log(e));
+
                 // console.log("sourceHandle: ", source_info);
                 // console.log("targetHandle: ", target_info);
                 if(target_info[2] == 'fwd'){
@@ -253,6 +302,20 @@ function Canvas(props: CanvasProp) {
 
     const onNodesDelete = useCallback((nodes: Node[]) => {
         console.log("node info: ", nodes);
+
+        fetch(backEndUrl + "/api/delBlock", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id:nodes[0].id
+            }),
+        }).then((data) => {
+            console.log(data.text())
+        }).catch(e=>console.log(e));
+
         nodes.map((node: Node,idx: number)=>{
             console.log(node.id)
             delete classdict[node.id]
