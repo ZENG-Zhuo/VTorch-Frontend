@@ -6,7 +6,8 @@ import { Collapse } from "antd";
 import { NodeId } from "../common/pythonFileTypes";
 import { connect } from "http2";
 
-const backEndUrl = "http://192.168.8.17:8001";
+const backEndUrl = "http://10.89.2.170:8001";
+// const backEndUrl = "http://192.168.8.17:8001";
 
 class Param {
     name: string;
@@ -54,7 +55,7 @@ class ParamHandle {
 // input handle, one source can only acceplt one line input
 export class SourceHandle {
     //  handle id which connect
-    source: string = "";
+    source: string[] = [];
     // self id
     id: string | undefined;
     // pre-defined, initial_value
@@ -130,10 +131,10 @@ function InputTensor() {
         let classInstance = new ClassInstance(node_name, nodeid);
         classdict[nodeid] = classInstance;
         let targethandle = new TargetHandle("Tensor");
-        targethandle.id = "input-" + nodeid + "-fwd-output-0";
+        targethandle.id = "input-" + nodeid + "-fwd-return";
         classdict[nodeid].targetHandles.push(targethandle);
         classdict[nodeid].targetHandles[0].id =
-            "input-" + nodeid + "-fwd-output-0";
+            "input-" + nodeid + "-fwd-return";
     }
 
     return (
@@ -145,7 +146,7 @@ function InputTensor() {
                 type="source"
                 position={Position.Right}
                 style={{ background: "#ff0" }}
-                id={"input-" + nodeid + "-fwd-output-0"}
+                id={"input-" + nodeid + "-fwd-return"}
                 isConnectable={true}
                 // onConnect={onConnect}
             />
@@ -164,10 +165,10 @@ function GroundTruthLabel() {
         let classInstance = new ClassInstance(node_name, nodeid);
         classdict[nodeid] = classInstance;
         let targethandle = new TargetHandle("Tensor");
-        targethandle.id = "GTLabel-" + nodeid + "-fwd-output-0";
+        targethandle.id = "GTLabel-" + nodeid + "-fwd-return";
         classdict[nodeid].targetHandles.push(targethandle);
         classdict[nodeid].targetHandles[0].id =
-            "GTLabel-" + nodeid + "-fwd-output-0";
+            "GTLabel-" + nodeid + "-fwd-return";
     }
 
     return (
@@ -179,7 +180,7 @@ function GroundTruthLabel() {
                 type="source"
                 position={Position.Right}
                 style={{ background: "#ff0" }}
-                id={"GTLabel-" + nodeid + "-fwd-output-0"}
+                id={"GTLabel-" + nodeid + "-fwd-return"}
                 isConnectable={true}
                 // onConnect={onConnect}
             />
@@ -197,7 +198,7 @@ function OutputTensor() {
         node_name = "output-" + nodeid;
         let classInstance = new ClassInstance(node_name, nodeid);
         let forward_handle = new SourceHandle("Tensor", node_name, true, "");
-        forward_handle.id = node_name + "-fwd-input-0";
+        forward_handle.id = node_name + "-fwd-input";
         classInstance.forwardHandles.push(forward_handle);
         classdict[nodeid] = classInstance;
     }
@@ -209,7 +210,7 @@ function OutputTensor() {
                 type="target"
                 position={Position.Left}
                 style={{ background: "#0ff" }}
-                id={node_name + "-fwd-input-0"}
+                id={node_name + "-fwd-input"}
                 isConnectable={true}
                 // onConnect={onConnect}
             />
@@ -224,7 +225,8 @@ function ParamToInput(
     nodeid: string,
     paramHandle: ParamHandle,
     key: number,
-    pre_length: number
+    pre_length: number,
+    graphName: string,
 ) {
     let name = paramHandle.param.name;
     // console.log(name)
@@ -240,14 +242,16 @@ function ParamToInput(
     const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
         console.log(evt.target.value);
         paramHandle.param.value = evt.target.value;
+        console.log("change arg in graph:", graphName)
 
-        fetch(backEndUrl + "/api/changeArguement", {
+        fetch(backEndUrl + "/api/changeArgument", {
             method: "POST",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                graphName: graphName,
                 target: paramHandle.id,
                 value: evt.target.value,
             }),
@@ -281,63 +285,11 @@ function ParamToInput(
     );
 }
 
-function SourcesToInput(
-    moduleName: string,
-    nodeid: string,
-    sourcesHandle: SourceHandle,
-    key: number
-) {
-    sourcesHandle = structuredClone(sourcesHandle);
-    let name = sourcesHandle.name;
-    let initial_value = sourcesHandle.value;
-
-    const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
-        console.log(evt.target.value);
-        sourcesHandle.value = evt.target.value;
-    }, []);
-
-    // const onConnect = (connection: Connection) => {
-    //     console.log(connection);
-    //     const { source, sourceHandle, target, targetHandle } = connection;
-    //     if (source) {
-    //         sourcesHandle.source = source;
-    //     }
-    // };
-
-    let sourceHandleId: string =
-        moduleName + "-" + nodeid + "-fwd-" + name + "-" + String(key);
-
-    sourcesHandle.id = sourceHandleId;
-
-    return (
-        <div key={name}>
-            <span>{name}</span> <br />
-            <input
-                name="text"
-                onChange={onChange}
-                className="nodrag"
-                placeholder={initial_value}
-            />
-            <Handle
-                className="handle"
-                type="target"
-                // onConnect={onConnect}
-                id={sourceHandleId}
-                position={Position.Left}
-                style={{
-                    top: 45.75 * key + 75,
-                    backgroundColor: "#00ffff",
-                }}
-                isConnectable={true}
-            />
-        </div>
-    );
-}
 
 // interface NNprops {
 //     module: Module;
 // }
-function NNmoduleToDiv(module: Module) {
+function NNmoduleToDiv(module: Module, graphName: string) {
     let nodeid = useNodeId();
     // const module = props.module;
     let paramsHandle = module.paramsHandle;
@@ -381,7 +333,8 @@ function NNmoduleToDiv(module: Module) {
                                 nodeId,
                                 paramHandle,
                                 key,
-                                Number(forwardHandles.length)
+                                Number(forwardHandles.length),
+                                graphName,
                             )
                     )}
                 </div>
@@ -436,12 +389,14 @@ function NNmoduleToDiv(module: Module) {
                 moduleName + "-" + nodeId + "-fwd-input-" + String(key);
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
-            if (nodeid) {
-                classdict[nodeid].forwardHandles[key].id =
-                    moduleName + "-" + nodeId + "-fwd-input-" + String(key);
-            }
+            
             let name = source_handle.name;
             let initial_value = "";
+
+            if (nodeid) {
+                classdict[nodeid].forwardHandles[key].id =
+                    moduleName + "-" + nodeId + "-fwd-" + name + '-' + String(key);
+            }
             const onChange = (evt: ChangeEvent<HTMLInputElement>) => {
                 console.log(evt.target.value);
                 source_handle.value = evt.target.value;
@@ -548,7 +503,8 @@ function getTensorNum(params: TypeInfo[]): [number, number] | "any" {
 } // return [compulsory tensor, optional tensor] or "any" --- any number of tensor tensor
 
 function GenerateModuleFunction(
-    classInfo: ClassInfo
+    classInfo: ClassInfo,
+    graphName: string,
 ): ComponentType<NodeProps> | undefined {
     const initFuncs = classInfo.getFunctions("__init__");
     const initFunc = initFuncs.at(0);
@@ -649,7 +605,7 @@ function GenerateModuleFunction(
             <div className="text-updater-node">
                 <span style={{ fontSize: 25 }}>{moduleName}</span>
                 <br />
-                {NNmoduleToDiv(module)}
+                {NNmoduleToDiv(module, graphName)}
             </div>
         );
     };

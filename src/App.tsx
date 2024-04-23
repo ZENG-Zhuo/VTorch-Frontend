@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import Canvas from "./Canvas/Canvas";
+import {Canvas} from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
@@ -9,6 +9,11 @@ import { jsonContent } from "./data";
 import { updateDatabase } from "./communication";
 import { Database } from "./common/objectStorage";
 import { parse } from "path";
+import type { FormProps } from "antd";
+import { FloatButton, Modal, Button, Checkbox, Form, Input } from "antd";
+
+const backEndUrl = "http://10.89.2.170:8001";
+// const backEndUrl = "http://192.168.8.17:8001";
 
 function extractClassBaseModule(
     node: FolderModuleNode | FileModuleNode
@@ -111,27 +116,118 @@ export default function App() {
                         )
                             importedClasses.set(classInfo.name, classInfo);
                     });
+
+                    // console.log("importedClasses: ",importedClasses)
+
                     setParsedClasses(importedClasses);
-                    console.log("imported: ", importedClasses);
+                    // console.log("imported: ", importedClasses);
                 } else throw "torch.nn not found";
             } else throw "torch not found";
         });
 
-    console.log("functions detail2: ", functions);
+
+    const [isModalOpen, setIsModalOpen] = useState(true);
+    const [graphName, setGraphName] = useState("");
+
+    const handleOk = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleCancel = () => {
+        setIsModalOpen(false);
+    };
+
+    type FieldType = {
+        canvasname?: string;
+    };
+
+    const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
+        const name = values.canvasname!;
+        setGraphName(name);
+        console.log("Success load value:", name);
+        fetch((backEndUrl+"/api/createGraph"), {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                graphName: name,
+            }),
+        }).then((data) => {
+            console.log(data.text())
+        })
+
+        setIsModalOpen(false);
+    };
+
+    const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
+        errorInfo
+    ) => {
+        console.log("Failed:", errorInfo);
+    };
+
+    // console.log("functions detail2: ", functions);
     return (
         <div className="container">
+            <Modal
+                title="Please input Canvas name"
+                open={isModalOpen}
+                onCancel={handleCancel}
+                footer={(_, { OkBtn, CancelBtn }) => (
+                  <></>
+                )}
+            >
+                <br/>
+                <Form
+                    name="basic"
+                    labelCol={{ span: 8 }}
+                    wrapperCol={{ span: 16 }}
+                    style={{ maxWidth: 600 }}
+                    initialValues={{ remember: true }}
+                    onFinish={onFinish}
+                    onFinishFailed={onFinishFailed}
+                    autoComplete="off"
+                >
+                    <Form.Item<FieldType>
+                        label="CanvasName"
+                        name="canvasname"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please input your CanvaName!",
+                            },
+                        ]}
+                    >
+                        <Input />
+                    </Form.Item>
+
+                <br/>
+
+                    <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+                        <Button type="primary" htmlType="submit">
+                            Submit
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
             <ReactFlowProvider>
                 <div className="main">
                     {parsedClassesWithInit ? (
                         <Sider
                             modules={parsedClassesWithInit}
                             funcs={functions}
+                            graphName={graphName}
+                            setGraphName={setGraphName}
                         />
                     ) : undefined}
                     {parsedClassesWithInit ? (
                         <Canvas
                             modules={parsedClassesWithInit}
                             funcs={functions}
+                            graphName={graphName}
+                            setGraphName={setGraphName}
                         />
                     ) : undefined}
                 </div>

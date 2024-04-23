@@ -1,4 +1,4 @@
-import { ChangeEvent, Children, ComponentType, forwardRef, useCallback } from "react";
+import { ChangeEvent, Children, ComponentType, forwardRef, useCallback, useState } from "react";
 import { Connection, Handle, NodeProps, Position, useNodeId } from "reactflow";
 import { ClassInfo, TypeInfo,FuncInfo } from "../common/pythonObjectTypes";
 import type { CollapseProps } from "antd";
@@ -77,6 +77,7 @@ function FucModuleToDiv(module: FuncModule) {
         }
     );
 
+    const [boxValue, setBoxValue] = useState<string>("")
 
     const SourceHandlesComponent = classdict[nodeid].forwardHandles.map(
         (source_handle: SourceHandle, key: number) => {
@@ -91,6 +92,7 @@ function FucModuleToDiv(module: FuncModule) {
             const onChange = (evt: ChangeEvent<HTMLInputElement>) => {
                 console.log(evt.target.value);
                 source_handle.value = evt.target.value;
+                setBoxValue(evt.target.value);
             }
 
             return (
@@ -99,8 +101,9 @@ function FucModuleToDiv(module: FuncModule) {
                     <input
                         name="text"
                         onChange={onChange}
+                        value={boxValue}
                         className="nodrag"
-                        placeholder={initial_value}
+                        // placeholder={initial_value}
                     />
                     <Handle
                         className="handle"

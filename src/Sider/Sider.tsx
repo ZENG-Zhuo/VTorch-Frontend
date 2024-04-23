@@ -18,25 +18,35 @@ import MagicIcon from "@rsuite/icons/legacy/Magic";
 import GearCircleIcon from "@rsuite/icons/legacy/GearCircle";
 import { Database } from "../common/objectStorage";
 
+
+
+const backEndUrl = "http://10.89.2.170:8001";
+// const backEndUrl = "http://192.168.8.17:8001";
+
 interface SiderProp {
     modules: Map<string, ClassInfo> | undefined;
     funcs: [string, FuncInfo[]][];
+    graphName: string,
+    setGraphName: React.Dispatch<React.SetStateAction<string>>,
 }
 
 function Sider(props: SiderProp) {
     let modules = props.modules;
     let funcs = props.funcs;
+    let graphName = props.graphName;
+    let setGraphName = props.setGraphName;
+
     const BasicNodes = [
         // need type def here
-        { type: "Input", data: { label: "Input", submodule: ["kysten"] } },
-        { type: "Output", data: { label: "Output", submodule: ["kysten"] } },
-        { type: "GroundTruth", data: { label: "GroundTruth", submodule: ["kysten"]} },
+        { type: "input", data: { label: "input", submodule: [] } },
+        { type: "output", data: { label: "output", submodule: [] } },
+        { type: "GroundTruth", data: { label: "GroundTruth", submodule: []} },
     ];
 
     let NnNodes: Array<{ type: string; data: { label: string, submodule: string[] } }> = [];
     if (modules)
         Array.from(modules, (classNameAndInfo) => {
-            if (classNameAndInfo[1].functions.find((f) => f.name === "forward"))
+            if (classNameAndInfo[1].getFunctions("forward").length > 0)
                 NnNodes.push({
                     type: classNameAndInfo[0],
                     data: { label: classNameAndInfo[0], submodule: ["torch", "nn"] },
@@ -77,60 +87,28 @@ function Sider(props: SiderProp) {
 
     const edges = useStore((state) => state.edges);
     const reactflow = useReactFlow();
-
-    function LogOutInfo() {
-        // let nodes: any = classdict
-        // console.log(nodes)
-        // console.log(edges)
-        console.log(reactflow.getNodes());
-    }
-
     function OnClickButton() {
         let nodes = structuredClone(
             GetClassDict()
         );
 
         console.log("nodes: ", nodes)
-        // let jsonObj:any = {}
-        // nodes.forEach((value:ClassInstance,key:string) => {
-        //     jsonObj[key] = value
-        // })
         var jsonData = JSON.stringify(nodes, null, "\t");
         console.log(jsonData);
 
-        // edges.forEach((edge) => {
-        //     console.log(edge.id);
-        //     console.log(edge.targetHandle);
-        //     console.log(edge.sourceHandle);
+        fetch((backEndUrl + '/api/genPythonCode'), {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                graphName: graphName,
+            }),
+        }).then((data)=>{
+            console.log(data.text())
+        })
 
-        //     let targetHandle = edge.targetHandle;
-        //     let sourceHandle = edge.sourceHandle;
-
-        //     if (
-        //         targetHandle!.substring(
-        //             targetHandle!.length - 5,
-        //             targetHandle!.length - 2
-        //         ) == "put"
-        //     ) {
-        //         // input and output, forward transfer
-        //         let source_key = edge.sourceHandle!.slice(-1);
-        //         let target_key = edge.targetHandle!.slice(-1);
-
-        //         nodes[edge.target].forwardHandles[Number(target_key)].source =
-        //             String(edge.source);
-        //         nodes[edge.source].targetHandles[
-        //             Number(source_key)
-        //         ].targets.push(String(edge.target));
-        //     } else {
-        //         // parameter transfer
-        //         let param_key = edge.targetHandle!.slice(-1);
-
-        //         nodes[edge.target].paramsHandles[Number(param_key)].source =
-        //             edge.source;
-        //     }
-        // });
-        // var jsonData = JSON.stringify(nodes, null, "\t");
-        // console.log(jsonData);
     }
 
     return (

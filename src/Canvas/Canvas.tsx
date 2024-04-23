@@ -21,10 +21,11 @@ import {
     GetClassDict,
     GenerateModuleFunction,
 } from "./LayerNode";
-import { FloatButton } from "antd";
+import type { FormProps } from "antd";
+import { FloatButton, Modal, Button, Checkbox, Form, Input } from "antd";
 import { LeftOutlined } from "@ant-design/icons";
 import "./Canvas.css";
-import {FucModuleToDiv, GenerateFunc} from  './FucNodes';
+import { FucModuleToDiv, GenerateFunc } from "./FucNodes";
 import { initialNodes, initialEdges } from "./defaultelements";
 import { ClassInfo, FuncInfo } from "../common/pythonObjectTypes";
 import { connect } from "http2";
@@ -32,12 +33,14 @@ import { connect } from "http2";
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
 let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
-    Input: InputTensor,
-    Output: OutputTensor,
+    input: InputTensor,
+    output: OutputTensor,
     GroundTruth: GroundTruthLabel,
     // BatchNorm2D: BatchNorm2D
 };
-const backEndUrl = "http://192.168.8.17:8001";
+
+const backEndUrl = "http://10.89.2.170:8001";
+// const backEndUrl = "http://192.168.8.17:8001";
 
 let id = initialNodes.length;
 const getId = () => `node${++id}`;
@@ -45,6 +48,8 @@ const getId = () => `node${++id}`;
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
     funcs: [string, FuncInfo[]][];
+    graphName: string;
+    setGraphName: React.Dispatch<React.SetStateAction<string>>;
 }
 // let moduleChanged: boolean = false;
 // export function setModuleChanged() {
@@ -58,12 +63,15 @@ function Canvas(props: CanvasProp) {
     const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
     const [nodes, setNodes] = useState(initialNodes);
     const [edges, setEdges] = useState(initialEdges);
+
     // const [NodesTypes, setNodesTypes] = useState(initialNodeTypes);
 
     const modules = props.modules;
+    const graphName = props.graphName;
+    const setGraphName = props.setGraphName;
     if (modules) {
         modules.forEach((classInfo, name) => {
-            const moduleFunction = GenerateModuleFunction(classInfo);
+            const moduleFunction = GenerateModuleFunction(classInfo, graphName);
             // let newNodes = { ...NodesTypes };
             // newNodes[name] = moduleFunction;
             if (moduleFunction) NodesTypes[name] = moduleFunction;
@@ -74,17 +82,18 @@ function Canvas(props: CanvasProp) {
     const funcs = props.funcs;
     if (funcs) {
         funcs.forEach((funcinfo) => {
-            if (funcinfo[1].length == 1){
-                const funcModule = GenerateFunc(funcinfo[1][0])
-                if (funcModule) NodesTypes[funcinfo[0]] = funcModule
+            if (funcinfo[1].length == 1) {
+                const funcModule = GenerateFunc(funcinfo[1][0]);
+                if (funcModule) NodesTypes[funcinfo[0]] = funcModule;
             } else {
-                funcinfo[1].forEach((func,idx) => {
-                    const funcModule = GenerateFunc(funcinfo[1][idx])
-                    if (funcModule) NodesTypes[funcinfo[0]+'<'+String(idx+1)+'>'] = funcModule
-                })
+                funcinfo[1].forEach((func, idx) => {
+                    const funcModule = GenerateFunc(funcinfo[1][idx]);
+                    if (funcModule)
+                        NodesTypes[funcinfo[0] + "<" + String(idx + 1) + ">"] =
+                            funcModule;
+                });
             }
-            
-        })
+        });
     }
 
     // console.log(reactFlowInstance);
@@ -102,22 +111,36 @@ function Canvas(props: CanvasProp) {
 
     const onDragOver = useCallback((event: any) => {
         event.preventDefault();
+        // console.log("drag over here");
         event.dataTransfer.dropEffect = "move";
     }, []);
 
+    const onNodeDragStop = useCallback(
+        (event: React.MouseEvent, node: Node) => {
+            console.log(node);
+            console.log("move in graph: ", graphName);
+        },
+        [graphName]
+    );
+
     const onDrop = useCallback(
         (event: any) => {
+            console.log("drop here");
             event.preventDefault();
 
             const reactFlowBounds =
                 reactFlowWrapper?.current?.getBoundingClientRect();
-            const type:string = event.dataTransfer.getData("application/reactflow");
-            const submodule:string = event.dataTransfer.getData("application/reactflow2")
-            const subModule:string[] = submodule.split(',')
+            const type: string = event.dataTransfer.getData(
+                "application/reactflow"
+            );
+            const submodule: string = event.dataTransfer.getData(
+                "application/reactflow2"
+            );
+            const subModule: string[] = submodule.split(",");
 
             // let type = type.label
-            console.log("get submodule data here:", subModule)
-            console.log("type is: ", type)
+            console.log("get submodule data here:", subModule);
+            console.log("type is: ", type);
             // check if the dropped element is valid
             if (typeof type === "undefined" || !type) {
                 return;
@@ -133,7 +156,9 @@ function Canvas(props: CanvasProp) {
                 position,
                 data: { label: `${type} node` },
             };
-            // console.log("type =",type)
+            console.log("graphName = ", graphName);
+            console.log("submodule", submodule);
+            console.log("name", newNode.type);
 
             fetch(backEndUrl + "/api/addBlock", {
                 method: "POST",
@@ -142,120 +167,161 @@ function Canvas(props: CanvasProp) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    graphName: graphName,
                     id: newNode.id,
                     name: newNode.type,
-                    submodule: ["torch","nn"]
+                    // position: position,
+                    submodule: subModule,
                 }),
-            }).then((data) => {
-                console.log(data.text())
-            }).catch(e=>console.log(e));
+            })
+                .then((data) => {
+                    console.log(data.text());
+                })
+                .catch((e) => console.log(e));
 
             setNodes((nds: any) => nds.concat(newNode));
         },
-        [reactFlowInstance]
+        [reactFlowInstance, graphName]
     );
 
-    const onConnect = useCallback((connection: Connection) => {
-        // console.log(connection)
-        const { source, sourceHandle, target, targetHandle } = connection;
-        let src_num = source!.slice(4);
-        let tag_num = target!.slice(4);
+    const onConnect = useCallback(
+        (connection: Connection) => {
+            // console.log(connection)
+            const { source, sourceHandle, target, targetHandle } = connection;
+            let src_num = source!.slice(4);
+            let tag_num = target!.slice(4);
 
-        let source_info = sourceHandle!.split("-");
-        let target_info = targetHandle!.split("-");
+            let source_info = sourceHandle!.split("-");
+            let target_info = targetHandle!.split("-");
 
-        console.log("edge info: ", source, sourceHandle, target, targetHandle);
-
-        let src_node_id = source_info[1];
-        let tgt_node_id = target_info[1];
-        let src_node_key = Number(source_info[source_info.length-1]);
-        let tgt_node_key = Number(target_info[target_info.length-1]);
-
-        let edge_id: string;
-        let edge_color:string;
-
-        fetch(backEndUrl + "/api/addEdge", {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                source: sourceHandle,
-                target: targetHandle,
-            }),
-        }).then((data) => {
-            console.log(data.text())
-        });
-
-        if (target_info[2] == "fwd") {
-            edge_id = `edge${src_num}-${tag_num}_flow`;
-            edge_color = "#000000"
-
-            console.log("connect edge of forward");
-            
-            // console.log("classdict: ",classdict[tgt_node_id], src_node_key)
-            const tgt_to_src_id = classdict[tgt_node_id].forwardHandles[tgt_node_key].id;
-            console.log("tgt_to_src_id ",tgt_to_src_id )
-            if (tgt_to_src_id) {
-                classdict[src_node_id].targetHandles[src_node_key].targets.push(
-                    tgt_to_src_id
-                );
-                console.log(classdict[src_node_id])
-            }
-
-            const src_to_tgt_id = classdict[src_node_id].targetHandles[src_node_key].id
-            console.log("src_to_tgt_id ",src_to_tgt_id)
-            if (src_to_tgt_id){
-                classdict[tgt_node_id].forwardHandles[tgt_node_key].source = src_to_tgt_id
-            }
-
-        } else {
-            console.log("connect edge of data");
-            let key_id: string = targetHandle!.substring(
-                targetHandle!.length - 1,
-                targetHandle!.length
+            console.log(
+                "edge info: ",
+                source,
+                sourceHandle,
+                target,
+                targetHandle
             );
-            edge_id = `edge${src_num}-${tag_num}_data_${key_id}`;
-            edge_color = "#FF0072"
 
-            if(source && target && sourceHandle && targetHandle){
-                classdict[source].targetHandles[src_node_key].targets.push(targetHandle)
-                classdict[target].paramsHandles[tgt_node_key].source = sourceHandle
+            let src_node_id = source_info[1];
+            let tgt_node_id = target_info[1];
+            let src_node_key = Number(source_info[source_info.length - 1]);
+            let tgt_node_key = Number(target_info[target_info.length - 1]);
+
+            if (Number.isNaN(src_node_key)) {
+                src_node_key = 0;
             }
-        }
-        console.log(sourceHandle);
-        console.log(targetHandle)
+            if (Number.isNaN(tgt_node_key)) {
+                tgt_node_key = 0;
+            }
 
-        const newEdge: any = {
-            id: edge_id,
-            source,
-            sourceHandle,
-            target,
-            targetHandle,
-            // type: 'customEdge',
-            style: { strokeWidth: 3,stroke: edge_color },
-            markerEnd: {
-                type: MarkerType.ArrowClosed,
-                color: edge_color
-            },
-        };
-        setEdges((prevElements: any): any => addEdge(newEdge, prevElements));
-    }, []);
+            let edge_id: string;
+            let edge_color: string;
 
-    const onEdgesDelete = useCallback((edges: Edge[]) => {
-        console.log("edge info: ",edges);
-        edges.forEach(
-            function(edge){
-                const {source, sourceHandle, target, targetHandle} = edge
+            console.log("connect in graph: ", graphName);
+
+            fetch(backEndUrl + "/api/addEdge", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    graphName: graphName,
+                    source: sourceHandle,
+                    target: targetHandle,
+                }),
+            }).then((data) => {
+                console.log(data.text());
+            });
+
+            if (target_info[2] == "fwd") {
+                edge_id = `edge${src_num}-${tag_num}_flow`;
+                edge_color = "#000000";
+
+                console.log("connect edge of forward");
+
+                // console.log("classdict: ",classdict[tgt_node_id], src_node_key)
+                const tgt_to_src_id =
+                    classdict[tgt_node_id].forwardHandles[tgt_node_key].id;
+                console.log("tgt_to_src_id ", tgt_to_src_id);
+                // console.log("src_node_key :", src_node_key)
+                if (tgt_to_src_id) {
+                    classdict[src_node_id].targetHandles[
+                        src_node_key
+                    ].targets.push(tgt_to_src_id);
+                    console.log(classdict[src_node_id]);
+                }
+
+                const src_to_tgt_id =
+                    classdict[src_node_id].targetHandles[src_node_key].id;
+                console.log("src_to_tgt_id ", src_to_tgt_id);
+                if (src_to_tgt_id) {
+                    classdict[tgt_node_id].forwardHandles[tgt_node_key].source.push(src_to_tgt_id);
+                }
+            } else {
+                console.log("connect edge of data");
+                let key_id: string = targetHandle!.substring(
+                    targetHandle!.length - 1,
+                    targetHandle!.length
+                );
+                edge_id = `edge${src_num}-${tag_num}_data_${key_id}`;
+                edge_color = "#FF0072";
+
+                if (source && target && sourceHandle && targetHandle) {
+                    classdict[source].targetHandles[src_node_key].targets.push(
+                        targetHandle
+                    );
+                    classdict[target].paramsHandles[tgt_node_key].source =
+                        sourceHandle;
+                }
+            }
+            console.log(sourceHandle);
+            console.log(targetHandle);
+
+            const newEdge: any = {
+                id: edge_id,
+                source,
+                sourceHandle,
+                target,
+                targetHandle,
+                // type: 'customEdge',
+                style: { strokeWidth: 3, stroke: edge_color },
+                markerEnd: {
+                    type: MarkerType.ArrowClosed,
+                    color: edge_color,
+                },
+            };
+            setEdges((prevElements: any): any =>
+                addEdge(newEdge, prevElements)
+            );
+        },
+        [graphName]
+    );
+
+    const onEdgesDelete = useCallback(
+        (edges: Edge[]) => {
+            console.log("edge info: ", edges);
+            console.log("edge delete in graph: ", graphName);
+            edges.forEach(function (edge) {
+                const { source, sourceHandle, target, targetHandle } = edge;
 
                 let source_info = sourceHandle!.split("-");
                 let target_info = targetHandle!.split("-");
 
                 let src_node_id = source_info[1];
                 let tgt_node_id = target_info[1];
-                let src_handle_key = Number(source_info[source_info.length-1]);
-                let tgt_handle_key = Number(target_info[target_info.length-1]);
+                let src_handle_key = Number(
+                    source_info[source_info.length - 1]
+                );
+                let tgt_handle_key = Number(
+                    target_info[target_info.length - 1]
+                );
+                if (Number.isNaN(src_handle_key)) {
+                    src_handle_key = 0;
+                }
+                if (Number.isNaN(tgt_handle_key)) {
+                    tgt_handle_key = 0;
+                }
 
                 fetch(backEndUrl + "/api/delEdge", {
                     method: "POST",
@@ -264,100 +330,118 @@ function Canvas(props: CanvasProp) {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
+                        graphName: graphName,
                         source: sourceHandle,
-                        target: targetHandle
+                        target: targetHandle,
                     }),
-                }).then((data) => {
-                    console.log(data.text())
-                }).catch(e=>console.log(e));
+                })
+                    .then((data) => {
+                        console.log(data.text());
+                    })
+                    .catch((e) => console.log(e));
 
                 // console.log("sourceHandle: ", source_info);
                 // console.log("targetHandle: ", target_info);
-                if(target_info[2] == 'fwd'){
-                    console.log('delete edge of forward')
-                    let src_targets = classdict[source].targetHandles[src_handle_key].targets
-                    src_targets.map( (item,index) => {
-                        if(item == targetHandle){
-                            src_targets.splice(index,1)
+                if (target_info[2] == "fwd") {
+                    console.log("delete edge of forward");
+                    let src_targets =
+                        classdict[source].targetHandles[src_handle_key].targets;
+                    src_targets.map((item, index) => {
+                        if (item == targetHandle) {
+                            src_targets.splice(index, 1);
                         }
-                    }
-                    )
-                    classdict[target].forwardHandles[tgt_handle_key].source = ""
-                }else if(target_info[2] == 'data'){
-                    console.log('delete edge of data');
-                    let src_targets = classdict[source].targetHandles[src_handle_key].targets
-                    src_targets.map( (item,index) => {
-                        if(item == targetHandle){
-                            src_targets.splice(index,1)
+                    });
+                    let tgt_sources =
+                        classdict[target].forwardHandles[tgt_handle_key].source;
+                    tgt_sources.map((item,index) => {
+                        if (item == sourceHandle) {
+                            tgt_sources.splice(index, 1);
                         }
-                    }
-                    )
-                    classdict[target].paramsHandles[tgt_handle_key].source = ""
+                    })
+                } else if (target_info[2] == "data") {
+                    console.log("delete edge of data");
+                    let src_targets =
+                        classdict[source].targetHandles[src_handle_key].targets;
+                    src_targets.map((item, index) => {
+                        if (item == targetHandle) {
+                            src_targets.splice(index, 1);
+                        }
+                    });
+                    classdict[target].paramsHandles[tgt_handle_key].source = "";
                 }
-                
-            }
-        )
-        
-    }, []);
+            });
+        },
+        [graphName]
+    );
 
-    const onNodesDelete = useCallback((nodes: Node[]) => {
-        console.log("node info: ", nodes);
+    const onNodesDelete = useCallback(
+        (nodes: Node[]) => {
+            console.log("node info: ", nodes);
 
-        fetch(backEndUrl + "/api/delBlock", {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                id:nodes[0].id
-            }),
-        }).then((data) => {
-            console.log(data.text())
-        }).catch(e=>console.log(e));
+            console.log("NODes delete in graph: ", graphName);
 
-        nodes.map((node: Node,idx: number)=>{
-            console.log(node.id)
-            delete classdict[node.id]
-        })
-        
-    },[])
+            fetch(backEndUrl + "/api/delBlock", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    graphName: graphName,
+                    id: nodes[0].id,
+                }),
+            })
+                .then((data) => {
+                    console.log(data.text());
+                })
+                .catch((e) => console.log(e));
+
+            nodes.map((node: Node, idx: number) => {
+                console.log(node.id);
+                delete classdict[node.id];
+            });
+        },
+        [graphName]
+    );
 
     return (
         <div className="canvas" ref={reactFlowWrapper}>
-            <ReactFlow
-                edges={edges}
-                nodes={nodes}
-                onNodesChange={onNodesChange}
-                onNodesDelete={onNodesDelete}
-                onEdgesChange={onEdgesChange}
-                onEdgesDelete={onEdgesDelete}
-                onConnect={onConnect}
-                nodeTypes={NodesTypes}
-                onInit={setReactFlowInstance}
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                fitView
-            >
-                <Controls position="top-right" />
-                {/* <Background variant={BackgroundVariant.Lines} size={1}/> */}
-                <Background
-                    id="1"
-                    gap={10}
-                    color="#f1f1f1"
-                    variant={BackgroundVariant.Lines}
-                />
+            {graphName === "" ? undefined : (
+                <ReactFlow
+                    edges={edges}
+                    nodes={nodes}
+                    onNodesChange={onNodesChange}
+                    onNodesDelete={onNodesDelete}
+                    onEdgesChange={onEdgesChange}
+                    onEdgesDelete={onEdgesDelete}
+                    onNodeDragStop={onNodeDragStop}
+                    onConnect={onConnect}
+                    nodeTypes={NodesTypes}
+                    onInit={setReactFlowInstance}
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    fitView
+                >
+                    <Controls position="top-right" />
+                    {/* <Background variant={BackgroundVariant.Lines} size={1}/> */}
+                    <Background
+                        id="1"
+                        gap={10}
+                        color="#f1f1f1"
+                        variant={BackgroundVariant.Lines}
+                    />
 
-                <Background
-                    id="2"
-                    gap={100}
-                    color="#ccc"
-                    variant={BackgroundVariant.Lines}
-                />
-                <FloatButton href="/" icon={<LeftOutlined />} />
-            </ReactFlow>
+                    <Background
+                        id="2"
+                        gap={100}
+                        color="#ccc"
+                        variant={BackgroundVariant.Lines}
+                    />
+                    <FloatButton href="/" icon={<LeftOutlined />} />
+                </ReactFlow>
+            )}
         </div>
     );
 }
 
-export default Canvas;
+export { Canvas };
