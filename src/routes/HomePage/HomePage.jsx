@@ -29,7 +29,6 @@ class HomePage extends React.PureComponent {
     return (
       <div className='container'>
         <img className='logo' src='VTorch.jpg' />
-        
         <Page2 className='page' key="page2" isMobile={false} />
       </div>
     );

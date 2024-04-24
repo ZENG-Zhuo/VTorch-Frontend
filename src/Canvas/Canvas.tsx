@@ -22,20 +22,29 @@ import {
     GenerateModuleFunction,
 } from "./LayerNode";
 import type { FormProps } from "antd";
-import { FloatButton, Modal, Button, Checkbox, Form, Input } from "antd";
+import {
+    FloatButton,
+    Modal,
+    Button,
+    Checkbox,
+    Form,
+    Input,
+    message,
+} from "antd";
 import { LeftOutlined } from "@ant-design/icons";
 import "./Canvas.css";
 import { FucModuleToDiv, GenerateFunc } from "./FucNodes";
 import { initialNodes, initialEdges } from "./defaultelements";
 import { ClassInfo, FuncInfo } from "../common/pythonObjectTypes";
 import { connect } from "http2";
+import { UDBInfo } from "../common/UDBTypes";
 
 // we define the nodeTypes outside of the component to prevent re-renderings
 // you could also use useMemo inside the component
 let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
     input: InputTensor,
     output: OutputTensor,
-    GroundTruth: GroundTruthLabel,
+    groundtruth: GroundTruthLabel,
     // BatchNorm2D: BatchNorm2D
 };
 
@@ -50,6 +59,7 @@ interface CanvasProp {
     funcs: [string, FuncInfo[]][];
     graphName: string;
     setGraphName: React.Dispatch<React.SetStateAction<string>>;
+    UDBMap: Map<string, UDBInfo>;
 }
 // let moduleChanged: boolean = false;
 // export function setModuleChanged() {
@@ -64,11 +74,14 @@ function Canvas(props: CanvasProp) {
     const [nodes, setNodes] = useState(initialNodes);
     const [edges, setEdges] = useState(initialEdges);
 
-    // const [NodesTypes, setNodesTypes] = useState(initialNodeTypes);
+    const [messageApi, contextHolder] = message.useMessage();
 
+    // const [NodesTypes, setNodesTypes] = useState(initialNodeTypes);
+    const msgKey = "canvas";
     const modules = props.modules;
     const graphName = props.graphName;
     const setGraphName = props.setGraphName;
+
     if (modules) {
         modules.forEach((classInfo, name) => {
             const moduleFunction = GenerateModuleFunction(classInfo, graphName);
@@ -96,6 +109,25 @@ function Canvas(props: CanvasProp) {
         });
     }
 
+    const UDBMap = props.UDBMap;
+    if (UDBMap) {
+        // console.log("UBDMAP INFO: ", UDBMap);
+        UDBMap.forEach((value) => {
+            value.classes.map((value) => {
+                const UBDClassModule = GenerateModuleFunction(value, graphName);
+                let name = value.name;
+                if (UBDClassModule) NodesTypes[name] = UBDClassModule;
+            });
+
+            value.functions.map((value) => {
+                const UBDFuncModule = GenerateFunc(value);
+                let name = value.name.split("$")[0];
+                // console.log(name)
+                if (UBDFuncModule) NodesTypes[name] = UBDFuncModule;
+            });
+        });
+    }
+
     // console.log(reactFlowInstance);
 
     const onNodesChange = useCallback(
@@ -112,6 +144,7 @@ function Canvas(props: CanvasProp) {
     const onDragOver = useCallback((event: any) => {
         event.preventDefault();
         // console.log("drag over here");
+        // console.log("event")
         event.dataTransfer.dropEffect = "move";
     }, []);
 
@@ -230,70 +263,101 @@ function Canvas(props: CanvasProp) {
                     source: sourceHandle,
                     target: targetHandle,
                 }),
-            }).then((data) => {
-                console.log(data.text());
-            });
+            })
+                .then((data) => {
+                    if (data.status === 200) {
+                        if (target_info[2] == "fwd") {
+                            edge_id = `edge${src_num}-${tag_num}_flow`;
+                            edge_color = "#000000";
 
-            if (target_info[2] == "fwd") {
-                edge_id = `edge${src_num}-${tag_num}_flow`;
-                edge_color = "#000000";
+                            console.log("connect edge of forward");
 
-                console.log("connect edge of forward");
+                            // console.log("classdict: ",classdict[tgt_node_id], src_node_key)
+                            const tgt_to_src_id =
+                                classdict[tgt_node_id].forwardHandles[
+                                    tgt_node_key
+                                ].id;
+                            console.log("tgt_to_src_id ", tgt_to_src_id);
+                            // console.log("src_node_key :", src_node_key)
+                            if (tgt_to_src_id) {
+                                classdict[src_node_id].targetHandles[
+                                    src_node_key
+                                ].targets.push(tgt_to_src_id);
+                                console.log(classdict[src_node_id]);
+                            }
 
-                // console.log("classdict: ",classdict[tgt_node_id], src_node_key)
-                const tgt_to_src_id =
-                    classdict[tgt_node_id].forwardHandles[tgt_node_key].id;
-                console.log("tgt_to_src_id ", tgt_to_src_id);
-                // console.log("src_node_key :", src_node_key)
-                if (tgt_to_src_id) {
-                    classdict[src_node_id].targetHandles[
-                        src_node_key
-                    ].targets.push(tgt_to_src_id);
-                    console.log(classdict[src_node_id]);
-                }
+                            const src_to_tgt_id =
+                                classdict[src_node_id].targetHandles[
+                                    src_node_key
+                                ].id;
+                            console.log("src_to_tgt_id ", src_to_tgt_id);
+                            if (src_to_tgt_id) {
+                                classdict[tgt_node_id].forwardHandles[
+                                    tgt_node_key
+                                ].source.push(src_to_tgt_id);
+                            }
+                        } else {
+                            console.log("connect edge of data");
+                            let key_id: string = targetHandle!.substring(
+                                targetHandle!.length - 1,
+                                targetHandle!.length
+                            );
+                            edge_id = `edge${src_num}-${tag_num}_data_${key_id}`;
+                            edge_color = "#FF0072";
 
-                const src_to_tgt_id =
-                    classdict[src_node_id].targetHandles[src_node_key].id;
-                console.log("src_to_tgt_id ", src_to_tgt_id);
-                if (src_to_tgt_id) {
-                    classdict[tgt_node_id].forwardHandles[tgt_node_key].source.push(src_to_tgt_id);
-                }
-            } else {
-                console.log("connect edge of data");
-                let key_id: string = targetHandle!.substring(
-                    targetHandle!.length - 1,
-                    targetHandle!.length
-                );
-                edge_id = `edge${src_num}-${tag_num}_data_${key_id}`;
-                edge_color = "#FF0072";
+                            if (
+                                source &&
+                                target &&
+                                sourceHandle &&
+                                targetHandle
+                            ) {
+                                classdict[source].targetHandles[
+                                    src_node_key
+                                ].targets.push(targetHandle);
+                                classdict[target].paramsHandles[
+                                    tgt_node_key
+                                ].source = sourceHandle;
+                            }
+                        }
+                        console.log(sourceHandle);
+                        console.log(targetHandle);
 
-                if (source && target && sourceHandle && targetHandle) {
-                    classdict[source].targetHandles[src_node_key].targets.push(
-                        targetHandle
-                    );
-                    classdict[target].paramsHandles[tgt_node_key].source =
-                        sourceHandle;
-                }
-            }
-            console.log(sourceHandle);
-            console.log(targetHandle);
-
-            const newEdge: any = {
-                id: edge_id,
-                source,
-                sourceHandle,
-                target,
-                targetHandle,
-                // type: 'customEdge',
-                style: { strokeWidth: 3, stroke: edge_color },
-                markerEnd: {
-                    type: MarkerType.ArrowClosed,
-                    color: edge_color,
-                },
-            };
-            setEdges((prevElements: any): any =>
-                addEdge(newEdge, prevElements)
-            );
+                        const newEdge: any = {
+                            id: edge_id,
+                            source,
+                            sourceHandle,
+                            target,
+                            targetHandle,
+                            // type: 'customEdge',
+                            style: { strokeWidth: 3, stroke: edge_color },
+                            markerEnd: {
+                                type: MarkerType.ArrowClosed,
+                                color: edge_color,
+                            },
+                        };
+                        setEdges((prevElements: any): any =>
+                            addEdge(newEdge, prevElements)
+                        );
+                    } else {
+                        data.text().then((data) => {
+                            messageApi.open({
+                                key: msgKey,
+                                type: "error",
+                                content: data,
+                                duration: 2,
+                            });
+                        });
+                    }
+                })
+                .catch((e) => {
+                    console.log(e);
+                    messageApi.open({
+                        key: msgKey,
+                        type: "error",
+                        content: "You cannot connect this edge",
+                        duration: 2,
+                    });
+                });
         },
         [graphName]
     );
@@ -353,11 +417,11 @@ function Canvas(props: CanvasProp) {
                     });
                     let tgt_sources =
                         classdict[target].forwardHandles[tgt_handle_key].source;
-                    tgt_sources.map((item,index) => {
+                    tgt_sources.map((item, index) => {
                         if (item == sourceHandle) {
                             tgt_sources.splice(index, 1);
                         }
-                    })
+                    });
                 } else if (target_info[2] == "data") {
                     console.log("delete edge of data");
                     let src_targets =
@@ -405,42 +469,45 @@ function Canvas(props: CanvasProp) {
     );
 
     return (
-        <div className="canvas" ref={reactFlowWrapper}>
-            {graphName === "" ? undefined : (
-                <ReactFlow
-                    edges={edges}
-                    nodes={nodes}
-                    onNodesChange={onNodesChange}
-                    onNodesDelete={onNodesDelete}
-                    onEdgesChange={onEdgesChange}
-                    onEdgesDelete={onEdgesDelete}
-                    onNodeDragStop={onNodeDragStop}
-                    onConnect={onConnect}
-                    nodeTypes={NodesTypes}
-                    onInit={setReactFlowInstance}
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
-                    fitView
-                >
-                    <Controls position="top-right" />
-                    {/* <Background variant={BackgroundVariant.Lines} size={1}/> */}
-                    <Background
-                        id="1"
-                        gap={10}
-                        color="#f1f1f1"
-                        variant={BackgroundVariant.Lines}
-                    />
+        <>
+            {contextHolder}
+            <div className="canvas" ref={reactFlowWrapper}>
+                {graphName === "" ? undefined : (
+                    <ReactFlow
+                        edges={edges}
+                        nodes={nodes}
+                        onNodesChange={onNodesChange}
+                        onNodesDelete={onNodesDelete}
+                        onEdgesChange={onEdgesChange}
+                        onEdgesDelete={onEdgesDelete}
+                        onNodeDragStop={onNodeDragStop}
+                        onConnect={onConnect}
+                        nodeTypes={NodesTypes}
+                        onInit={setReactFlowInstance}
+                        onDrop={onDrop}
+                        onDragOver={onDragOver}
+                        fitView
+                    >
+                        <Controls position="top-right" />
+                        {/* <Background variant={BackgroundVariant.Lines} size={1}/> */}
+                        <Background
+                            id="1"
+                            gap={10}
+                            color="#f1f1f1"
+                            variant={BackgroundVariant.Lines}
+                        />
 
-                    <Background
-                        id="2"
-                        gap={100}
-                        color="#ccc"
-                        variant={BackgroundVariant.Lines}
-                    />
-                    <FloatButton href="/" icon={<LeftOutlined />} />
-                </ReactFlow>
-            )}
-        </div>
+                        <Background
+                            id="2"
+                            gap={100}
+                            color="#ccc"
+                            variant={BackgroundVariant.Lines}
+                        />
+                        <FloatButton href="/" icon={<LeftOutlined />} />
+                    </ReactFlow>
+                )}
+            </div>
+        </>
     );
 }
 

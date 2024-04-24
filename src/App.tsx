@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ReactFlowProvider } from "reactflow";
-import {Canvas} from "./Canvas/Canvas";
+import { Canvas } from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
 import { FileModuleNode, FolderModuleNode } from "./common/pythonFileTypes";
@@ -11,6 +11,7 @@ import { Database } from "./common/objectStorage";
 import { parse } from "path";
 import type { FormProps } from "antd";
 import { FloatButton, Modal, Button, Checkbox, Form, Input } from "antd";
+import { UDBInfo } from "./common/UDBTypes";
 
 const backEndUrl = "http://10.89.2.170:8001";
 // const backEndUrl = "http://192.168.8.17:8001";
@@ -64,6 +65,8 @@ export default function App() {
         Map<string, ClassInfo> | undefined
     >(undefined);
     const [functions, setFunctions] = useState<[string, FuncInfo[]][]>([]);
+    const [UDBMap, setUDBMap] = useState<Map<string, UDBInfo>>(new Map());
+
     if (!parsedClassesWithInit)
         updateDatabase(() => {
             const packageId = Database.findPackage("torch", "1.0.0");
@@ -79,7 +82,9 @@ export default function App() {
                 if (torchId) {
                     const torch = Database.getNode(torchId);
                     const torchFunctions = torch.getFunctions();
-                    setFunctions(torchFunctions.filter((f) => !f[0].startsWith("_")));
+                    setFunctions(
+                        torchFunctions.filter((f) => !f[0].startsWith("_"))
+                    );
                     console.log("functions detail1: ", functions);
                 } else throw "torch not found";
                 if (nodeId) {
@@ -125,7 +130,6 @@ export default function App() {
             } else throw "torch not found";
         });
 
-
     const [isModalOpen, setIsModalOpen] = useState(true);
     const [graphName, setGraphName] = useState("");
 
@@ -145,7 +149,7 @@ export default function App() {
         const name = values.canvasname!;
         setGraphName(name);
         console.log("Success load value:", name);
-        fetch((backEndUrl+"/api/createGraph"), {
+        fetch(backEndUrl + "/api/createGraph", {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -155,8 +159,8 @@ export default function App() {
                 graphName: name,
             }),
         }).then((data) => {
-            console.log(data.text())
-        })
+            console.log(data.text());
+        });
 
         setIsModalOpen(false);
     };
@@ -167,18 +171,49 @@ export default function App() {
         console.log("Failed:", errorInfo);
     };
 
-    // console.log("functions detail2: ", functions);
+    if (UDBMap.size == 0){
+        fetch(backEndUrl + "/api/getUDBs", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+        })
+            .then((response) =>
+                response.json().then((data) => {
+                    // console.log("datatxt", data);
+                    data.map((item: any) => {
+                        setUDBMap((prev) => {
+                        const newUDB = structuredClone(prev);
+                        newUDB.set(
+                            item[0],
+                            UDBInfo.fromJSON(JSON.parse(item[1])),
+                        );
+                        return newUDB;
+                    });
+                        // let UDBinfo: UDBInfo = new UDBInfo(item[1].data)
+
+                        // UDBinfo.classes = item[1].classes
+                        // UDBinfo.functions = item[1].functions
+
+                        // UDBMap.set(item[0], UDBinfo)
+                    });
+                })
+            )
+            .catch((e) => console.log("data error", e));
+    }
+
+    // console.log("UDBMap: ", UDBMap);
+
     return (
         <div className="container">
             <Modal
                 title="Please input Canvas name"
                 open={isModalOpen}
                 onCancel={handleCancel}
-                footer={(_, { OkBtn, CancelBtn }) => (
-                  <></>
-                )}
+                footer={(_, { OkBtn, CancelBtn }) => <></>}
             >
-                <br/>
+                <br />
                 <Form
                     name="basic"
                     labelCol={{ span: 8 }}
@@ -202,7 +237,7 @@ export default function App() {
                         <Input />
                     </Form.Item>
 
-                <br/>
+                    <br />
 
                     <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
                         <Button type="primary" htmlType="submit">
@@ -214,20 +249,22 @@ export default function App() {
 
             <ReactFlowProvider>
                 <div className="main">
-                    {parsedClassesWithInit ? (
+                    {parsedClassesWithInit && UDBMap ? (
                         <Sider
                             modules={parsedClassesWithInit}
                             funcs={functions}
                             graphName={graphName}
                             setGraphName={setGraphName}
+                            UDBMap={UDBMap}
                         />
                     ) : undefined}
-                    {parsedClassesWithInit ? (
+                    {parsedClassesWithInit && UDBMap ? (
                         <Canvas
                             modules={parsedClassesWithInit}
                             funcs={functions}
                             graphName={graphName}
                             setGraphName={setGraphName}
+                            UDBMap={UDBMap}
                         />
                     ) : undefined}
                 </div>

@@ -7,6 +7,7 @@ import { Icon } from '@ant-design/compatible';
 import Tetris from './technology-comp/Tetris';
 import Column from './technology-comp/Column';
 import Coordinate from './technology-comp/Coordinate';
+import Building from './technology-comp/Building';
 
 
 const pageData = [
@@ -21,14 +22,20 @@ const pageData = [
   {
     title: 'Model Design',
     content: 'Design your model for training',
-    links: (<a href="/modelPage">Design your model<Icon type="right" /></a>),
+    links: (<a href="/modelPage">Design Your Model<Icon type="right" /></a>),
     Bg: Column,
   },
   {
-    title: 'Loss Design',
-    content: 'Design your loss function to optimize the model',
-    links: (<a href="/modelPage">Design your Loss Function<Icon type="right" /></a>),
+    title: 'User Defined Block',
+    content: 'Design your personalized training block',
+    links: (<a href="/UDB">Design Your Block<Icon type="right" /></a>),
     Bg: Coordinate,
+  },
+  {
+    title: 'Code Generation',
+    content: 'Choose your design and generate the code',
+    links: (<a href="/codeGeneration">Generate Your Code<Icon type="right" /></a>),
+    Bg: Tetris,
   },
 ];
 
@@ -50,7 +57,7 @@ export default class Design extends React.PureComponent {
     const { isMobile } = this.props;
     const children = pageData.map((item, i) => {
       const colProps = {
-        md: item.full ? 24 : 8, xs: 24,
+        md: item.full ? 24 : 6, xs: 24,
       };
       return (
         <Col {...colProps} key={i.toString()} className="page2-item-wrapper">
@@ -84,11 +91,11 @@ export default class Design extends React.PureComponent {
           <br></br>
           <br></br>
           <i />
-          <OverPack className="page2-content">
-            <QueueAnim component={Row} key="queue" type="bottom" leaveReverse>
+          {/* <OverPack className="page2-content"> */}
+            <QueueAnim component={Row} key="queue" type="bottom" >
               {children}
             </QueueAnim>
-          </OverPack>
+          {/* </OverPack> */}
         </div>
       </div>);
   }

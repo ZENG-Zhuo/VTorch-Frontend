@@ -17,6 +17,7 @@ import GroupIcon from "@rsuite/icons/legacy/Group";
 import MagicIcon from "@rsuite/icons/legacy/Magic";
 import GearCircleIcon from "@rsuite/icons/legacy/GearCircle";
 import { Database } from "../common/objectStorage";
+import { UDBInfo } from "../common/UDBTypes";
 
 
 
@@ -28,19 +29,24 @@ interface SiderProp {
     funcs: [string, FuncInfo[]][];
     graphName: string,
     setGraphName: React.Dispatch<React.SetStateAction<string>>,
+    UDBMap:Map<string, UDBInfo>;
 }
+
 
 function Sider(props: SiderProp) {
     let modules = props.modules;
     let funcs = props.funcs;
     let graphName = props.graphName;
     let setGraphName = props.setGraphName;
+    let UDBMap = props.UDBMap;
+
+    
 
     const BasicNodes = [
         // need type def here
         { type: "input", data: { label: "input", submodule: [] } },
         { type: "output", data: { label: "output", submodule: [] } },
-        { type: "GroundTruth", data: { label: "GroundTruth", submodule: []} },
+        { type: "groundtruth", data: { label: "groundtruth", submodule: []} },
     ];
 
     let NnNodes: Array<{ type: string; data: { label: string, submodule: string[] } }> = [];
@@ -77,8 +83,68 @@ function Sider(props: SiderProp) {
         // console.log('func info fail to get')
     }
 
+    function UDBInfotoDiv(value:UDBInfo, key: string){
+        return (
+            <div>
+                <Nav.Menu
+                eventKey={"UDBtoDiv"+key + "-classes"}
+                placement="rightStart"
+                title="UDB-class"
+                icon={<MagicIcon />}
+                >
+                <div className="nodes">
+                    {value.classes.map(x => {
+                        // console.log("xxxxx",x)
+                        return (
+                        <div
+                        key={"UDB-"+key+'-'+x.name}
+                        className={classnames([
+                            "sider-node",
+                            x.name,
+                        ])}
+                        onDragStart={(event: any) =>
+                            onDragStart(event, {label: x.name, submodule: ["UDB",key]})
+                        }
+                        draggable>
+                            {x.name}
+                        </div>)
+                    })}
+                </div>
+                </Nav.Menu>
+
+                <Nav.Menu
+                eventKey={"UDBtoDiv"+key + "-funcs"}
+                placement="rightStart"
+                title="UDB-funcs"
+                icon={<MagicIcon />}
+                >
+                    <div className="nodes">
+                {value.functions.map(x => {
+                    let new_name = x.name.split('$')[0]
+                    console.log("newname = ",new_name)
+                    return (
+                    <div
+                    key={"UDB-"+key+'-'+new_name}
+                    className={classnames([
+                        "sider-node",
+                        new_name,
+                    ])}
+                    onDragStart={(event: any) =>
+                        onDragStart(event, {label:new_name, submodule:["UDB",key]})
+                    }
+                    draggable>
+                        {new_name}
+                    </div>)
+                })}
+                </div>
+                </Nav.Menu>
+            </div>
+        )
+    }
+
     const onDragStart = (event: any, data: any) => {
         console.log("output the nodetype");
+        console.log(data.submodule)
         // console.log("drag the data:",data);
         event.dataTransfer.setData("application/reactflow", data.label);
         event.dataTransfer.setData("application/reactflow2",data.submodule);
@@ -121,6 +187,7 @@ function Sider(props: SiderProp) {
             <Sidenav>
                 <Sidenav.Body>
                     <Nav>
+                        <div className="choose">
                         <Nav.Menu
                             key="Basic"
                             placement="rightStart"
@@ -147,6 +214,8 @@ function Sider(props: SiderProp) {
                                 ))}
                             </div>
                         </Nav.Menu>
+                        </div>
+                        <div className="choose">
                         <Nav.Menu
                             key="NN"
                             placement="rightStart"
@@ -173,6 +242,8 @@ function Sider(props: SiderProp) {
                                 ))}
                             </div>
                         </Nav.Menu>
+                        </div>
+                        <div className="choose">
                         <Nav.Menu
                             key="Func"
                             placement="rightStart"
@@ -199,6 +270,11 @@ function Sider(props: SiderProp) {
                                 ))}
                             </div>
                         </Nav.Menu>
+                        </div>
+                        {Array.from(UDBMap, function(value){
+                            return UDBInfotoDiv(value[1],value[0])
+                        })}
+                        {/* {UDBtoDiv(UDBMap)} */}
                     </Nav>
                 </Sidenav.Body>
             </Sidenav>

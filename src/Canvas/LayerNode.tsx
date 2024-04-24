@@ -1,13 +1,21 @@
-import { ChangeEvent, Children, ComponentType, useCallback } from "react";
+import {
+    ChangeEvent,
+    Children,
+    ComponentType,
+    useCallback,
+    useState,
+} from "react";
 import { Connection, Handle, NodeProps, Position, useNodeId } from "reactflow";
 import { ClassInfo, TypeInfo } from "../common/pythonObjectTypes";
 import type { CollapseProps } from "antd";
-import { Collapse } from "antd";
+import { Collapse, message } from "antd";
 import { NodeId } from "../common/pythonFileTypes";
 import { connect } from "http2";
 
 const backEndUrl = "http://10.89.2.170:8001";
 // const backEndUrl = "http://192.168.8.17:8001";
+
+const msgKey = "LayerNodes";
 
 class Param {
     name: string;
@@ -226,23 +234,24 @@ function ParamToInput(
     paramHandle: ParamHandle,
     key: number,
     pre_length: number,
-    graphName: string,
+    graphName: string
 ) {
     let name = paramHandle.param.name;
     // console.log(name)
     let initial_value = paramHandle.param.initial_value;
 
-    
     let id_name: string = name as string;
     let id_key: string = key.toString();
     paramHandle.id =
-        moduleName + "-" + nodeid + "-data-" + id_name + "-" + id_key;
+        moduleName + "-" + nodeid + "-ini-" + id_name + "-" + id_key;
 
+    const [color, setColor] = useState("black");
+    const [messageApi, contextHolder] = message.useMessage();
 
     const onChange = useCallback((evt: ChangeEvent<HTMLInputElement>) => {
         console.log(evt.target.value);
-        paramHandle.param.value = evt.target.value;
-        console.log("change arg in graph:", graphName)
+
+        console.log("change arg in graph:", graphName);
 
         fetch(backEndUrl + "/api/changeArgument", {
             method: "POST",
@@ -255,36 +264,54 @@ function ParamToInput(
                 target: paramHandle.id,
                 value: evt.target.value,
             }),
-        }).then((data) => {
-            console.log(data.text())
-        }).catch(e=>console.log(e));
+        })
+            .then((data) => {
+                // console.log(data.text())
+                if (data.status == 200) {
+                    setColor("black");
+                    paramHandle.param.value = evt.target.value;
+                } else {
+                    setColor("red");
+                    data.text().then((data) => {
+                        messageApi.open({
+                            key: msgKey,
+                            type: "error",
+                            content: data,
+                            duration: 2,
+                        });
+                    });
+                }
+            })
+            .catch((e) => console.log(e));
     }, []);
-    
 
     return (
-        <div key={name}>
-            <span>{name}</span> <br />
-            <input
-                name="text"
-                onChange={onChange}
-                className="nodrag"
-                placeholder={initial_value}
-            />
-            <Handle
-                className="handle"
-                type="target"
-                // onConnect={onConnect}
-                id={paramHandle.id}
-                position={Position.Left}
-                style={{
-                    top: (pre_length + 1) * 45.75 + 49.75 * key + 75,
-                }}
-                isConnectable={true}
-            />
-        </div>
+        <>
+            {contextHolder}
+            <div key={name}>
+                <span>{name}</span> <br />
+                <input
+                    name="text"
+                    onBlur={onChange}
+                    className="nodrag"
+                    placeholder={initial_value}
+                    style={{ color: color }}
+                />
+                <Handle
+                    className="handle"
+                    type="target"
+                    // onConnect={onConnect}
+                    id={paramHandle.id}
+                    position={Position.Left}
+                    style={{
+                        top: (pre_length + 1) * 45.75 + 49.75 * key + 75,
+                    }}
+                    isConnectable={true}
+                />
+            </div>
+        </>
     );
 }
-
 
 // interface NNprops {
 //     module: Module;
@@ -334,7 +361,7 @@ function NNmoduleToDiv(module: Module, graphName: string) {
                                 paramHandle,
                                 key,
                                 Number(forwardHandles.length),
-                                graphName,
+                                graphName
                             )
                     )}
                 </div>
@@ -350,13 +377,36 @@ function NNmoduleToDiv(module: Module, graphName: string) {
     // console.log("IDT1: ", targetHandles);
     const targetHandlesComponent = classdict[nodeid].targetHandles.map(
         (targetHandle_split: TargetHandle, key: number) => {
-            targetHandle_split.id =
-                moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+            // if (classdict[nodeid].targetHandles.length === 1){
+            //     targetHandle_split.id =
+            //         moduleName + "-" + nodeId + "-fwd-output";
+            // } else {
+            //     targetHandle_split.id =
+            //         moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+            // }
+
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
             if (nodeid) {
-                classdict[nodeid].targetHandles[key].id =
-                    moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+                if (classdict[nodeid].targetHandles.length === 1) {
+                    classdict[nodeid].targetHandles[key].id =
+                        moduleName + "-" + nodeId + "-fwd-output";
+                    targetHandle_split.id =
+                        moduleName + "-" + nodeId + "-fwd-output";
+                } else {
+                    classdict[nodeid].targetHandles[key].id =
+                        moduleName +
+                        "-" +
+                        nodeId +
+                        "-fwd-output-" +
+                        String(key);
+                    targetHandle_split.id =
+                        moduleName +
+                        "-" +
+                        nodeId +
+                        "-fwd-output-" +
+                        String(key);
+                }
             }
 
             return (
@@ -383,33 +433,78 @@ function NNmoduleToDiv(module: Module, graphName: string) {
         }
     );
 
+    const [color, setColor] = useState("black");
+    const [messageApi, contextHolder] = message.useMessage();
     const SourceHandlesComponent = classdict[nodeid].forwardHandles.map(
         (source_handle: SourceHandle, key: number) => {
             source_handle.id =
                 moduleName + "-" + nodeId + "-fwd-input-" + String(key);
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
-            
+
             let name = source_handle.name;
             let initial_value = "";
 
             if (nodeid) {
                 classdict[nodeid].forwardHandles[key].id =
-                    moduleName + "-" + nodeId + "-fwd-" + name + '-' + String(key);
+                    moduleName +
+                    "-" +
+                    nodeId +
+                    "-fwd-" +
+                    name +
+                    "-" +
+                    String(key);
+                let ini_v = classdict[nodeid].forwardHandles[key].value;
+                if (ini_v) {
+                    initial_value = ini_v;
+                }
             }
+
             const onChange = (evt: ChangeEvent<HTMLInputElement>) => {
                 console.log(evt.target.value);
-                source_handle.value = evt.target.value;
+                // source_handle.value = evt.target.value;
+                fetch(backEndUrl + "/api/changeArgument", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        graphName: graphName,
+                        target: source_handle.id,
+                        value: evt.target.value,
+                    }),
+                })
+                    .then((data) => {
+                        // console.log(data.text())
+                        if (data.status == 200) {
+                            setColor("black");
+                            source_handle.value = evt.target.value;
+                        } else {
+                            setColor("red");
+                            data.text().then((data) => {
+                                messageApi.open({
+                                    key: msgKey,
+                                    type: "error",
+                                    content: data,
+                                    duration: 2,
+                                });
+                            });
+                        }
+                    })
+                    .catch((e) => console.log(e));
             };
 
             return (
                 <div key={name}>
+                    {contextHolder}
                     <span>{name}</span> <br />
                     <input
                         name="text"
-                        onChange={onChange}
+                        onBlur={onChange}
                         className="nodrag"
                         placeholder={initial_value}
+                        style={{color: color}}
                     />
                     <Handle
                         className="handle"
@@ -504,7 +599,7 @@ function getTensorNum(params: TypeInfo[]): [number, number] | "any" {
 
 function GenerateModuleFunction(
     classInfo: ClassInfo,
-    graphName: string,
+    graphName: string
 ): ComponentType<NodeProps> | undefined {
     const initFuncs = classInfo.getFunctions("__init__");
     const initFunc = initFuncs.at(0);

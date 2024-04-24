@@ -1,11 +1,14 @@
 @import "rsuite/dist/rsuite.css";
 
+
 .nodes {
     margin-bottom: 20px;
 }
 
 .sider {
   overflow: scroll;
+  display: 'inline-table',
+  /* marginRight: 10px, */
 }
   
 .sider-node {

@@ -199,7 +199,7 @@ function GenerateFunc(
         // console.log("Target1: ", module);
         return (
             <div className="text-updater-node">
-                <span style={{ fontSize: 25 }}>{moduleName}</span>
+                <span style={{ fontSize: 25 }}>{moduleName.split("$")[0]}</span>
                 <br />
                 {FucModuleToDiv(module)}
             </div>
