@@ -25,7 +25,13 @@ import { FileModuleNode, FolderModuleNode } from "../../common/pythonFileTypes";
 import { ClassInfo } from "../../common/pythonObjectTypes";
 import { transformsPopover } from "./TransformsPopover";
 import {
+    CustomCodeConfig,
+    CustomCodeDatasetInfo,
+    CutomCodeDefault,
     DatasetInfo,
+    SegConfig,
+    SegDefault,
+    SegmentationDatasetInfo,
     TabularDatasetInfo,
     TabularDatasetSetting,
     TabularSettingDefault,
@@ -34,6 +40,11 @@ import {
 } from "../../common/datasetTypes";
 import { TabularConfigurePage, TabularFilePathPage } from "./TabularDataset";
 import { Link } from "react-router-dom";
+import { SegConfigPage, SegFilePathPage } from "./SegDataset";
+import {
+    CustomCodeDatasetConfigurePage,
+    CustomCodePage,
+} from "./CustomCodeDataset";
 const { Content, Footer, Header } = Layout;
 const gridStyle: React.CSSProperties = {
     width: "50%",
@@ -75,6 +86,9 @@ export default function DatasetPage() {
     ] = useState<(string | TransformInstance[] | undefined)[]>([]);
     const [tabularSetting, setTarbularSetting] =
         useState<TabularDatasetSetting>(TabularSettingDefault);
+    const [segConfig, setSegConfig] = useState<SegConfig>(SegDefault);
+    const [CCDConfig, setCCDConfig] =
+        useState<CustomCodeConfig>(CutomCodeDefault);
     let datasetOptions: { value: string; label: string }[] = [];
     let torchvisionDatasets: FolderModuleNode | FileModuleNode | undefined;
     let torchvisionDatasetsClasses: Map<string, ClassInfo> = new Map();
@@ -146,10 +160,9 @@ export default function DatasetPage() {
     const targetTorchvisionDataset = torchvisionDatasetsClasses.get(
         torchvisionDatasetName
     );
-    const targetTorchvisionDatasetInitFuncParams =
-        targetTorchvisionDataset?.functions
-            .find((f) => f.name === "__init__")
-            ?.parameters.slice(1);
+    const targetTorchvisionDatasetInitFuncParams = targetTorchvisionDataset
+        ?.getFunctions("__init__")[0]
+        ?.parameters.slice(1);
 
     if (targetTorchvisionDatasetInitFuncValues.length === 0)
         targetTorchvisionDatasetInitFuncParams?.forEach(() => {
@@ -306,20 +319,43 @@ export default function DatasetPage() {
             ],
         },
         {
-            text: "Build your own image classification dataset",
-            component: [<div></div>, <div></div>],
-        },
-        {
             text: "Build your own image segmentatio dataset",
-            component: [<div></div>, <div></div>],
-        },
-        {
-            text: "Build your own text dataset",
-            component: [<div></div>, <div></div>],
+            component: [
+                SegFilePathPage(
+                    [segConfig.imgDir, segConfig.maskDir],
+                    (dirs) => {
+                        setSegConfig({
+                            ...segConfig,
+                            ["imgDir"]: dirs[0],
+                            ["maskDir"]: dirs[1],
+                        });
+                    }
+                ),
+                SegConfigPage(
+                    segConfig,
+                    setSegConfig,
+                    transformsClasses,
+                    transformName,
+                    setTransformName
+                ),
+            ],
         },
         {
             text: "Build dataset by code",
-            component: [<div></div>, <div></div>],
+            component: [
+                CustomCodePage(CCDConfig.code, (newCode) => {
+                    setCCDConfig({ ...CCDConfig, ["code"]: newCode });
+                }),
+                CustomCodeDatasetConfigurePage(
+                    CCDConfig.datasetDefinition,
+                    (newCode) => {
+                        setCCDConfig({
+                            ...CCDConfig,
+                            ["datasetDefinition"]: newCode,
+                        });
+                    }
+                ),
+            ],
         },
     ];
 
@@ -432,7 +468,9 @@ export default function DatasetPage() {
                                 {steps[current].content}
                             </div>
                             <div style={{ marginTop: 24 }}>
-                                <Link to={"/homePage"}><Button>Back to homePage</Button></Link>
+                                <Link to={"/homePage"}>
+                                    <Button>Back to homePage</Button>
+                                </Link>
                                 {current < steps.length - 1 && (
                                     <Button
                                         type="primary"
@@ -462,6 +500,25 @@ export default function DatasetPage() {
                                                         new TabularDatasetInfo(
                                                             datasetName,
                                                             tabularSetting
+                                                        )
+                                                    );
+                                                    break;
+                                                case 2:
+                                                    setDatasetInfo(
+                                                        datasetName,
+                                                        new SegmentationDatasetInfo(
+                                                            datasetName,
+                                                            segConfig
+                                                        )
+                                                    );
+                                                    break;
+
+                                                case 3:
+                                                    setDatasetInfo(
+                                                        datasetName,
+                                                        new CustomCodeDatasetInfo(
+                                                            datasetName,
+                                                            CCDConfig
                                                         )
                                                     );
                                                     break;

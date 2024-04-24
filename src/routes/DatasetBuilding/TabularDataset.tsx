@@ -1,4 +1,4 @@
-import { Flex, Input, InputNumber, Switch, Typography } from "antd";
+import { Flex, Input, Switch, Typography } from "antd";
 import {
     TabularDatasetSetting,
     TabularSettingDefault,

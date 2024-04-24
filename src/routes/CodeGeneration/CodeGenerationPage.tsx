@@ -99,7 +99,6 @@ export default function CodeGenerationPage() {
     }
     return (
         <div>
-            Code Generation Page
             <Layout>
                 <Header
                     style={{ display: "flex", alignItems: "center" }}

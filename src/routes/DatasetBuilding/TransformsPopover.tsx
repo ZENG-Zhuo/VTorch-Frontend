@@ -92,9 +92,7 @@ export function transformsPopover(
                             <div style={{ width: "80%" }}>
                                 {transformsClasses
                                     .get(item.name)
-                                    ?.functions.find(
-                                        (f) => f.name === "__init__"
-                                    )
+                                    ?.getFunctions("__init__")[0]
                                     ?.parameters?.slice(1)
                                     .map((p, paramIndex) => {
                                         const isTransform =
