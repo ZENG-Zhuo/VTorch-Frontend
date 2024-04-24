@@ -51,8 +51,8 @@ let NodesTypes: { [key: string]: ComponentType<NodeProps> } = {
 const backEndUrl = "http://10.89.2.170:8001";
 // const backEndUrl = "http://192.168.8.17:8001";
 
-let id = initialNodes.length;
-const getId = () => `node${++id}`;
+// let id = initialNodes.length;
+
 
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
@@ -60,6 +60,9 @@ interface CanvasProp {
     graphName: string;
     setGraphName: React.Dispatch<React.SetStateAction<string>>;
     UDBMap: Map<string, UDBInfo>;
+    nodes: Node[],
+    edges: Edge[],
+    maxid: number,
 }
 // let moduleChanged: boolean = false;
 // export function setModuleChanged() {
@@ -71,8 +74,13 @@ let classdict = GetClassDict();
 function Canvas(props: CanvasProp) {
     const reactFlowWrapper = useRef<HTMLInputElement>(null);
     const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
-    const [nodes, setNodes] = useState(initialNodes);
-    const [edges, setEdges] = useState(initialEdges);
+    const load_nodes = props.nodes;
+    const load_edges = props.edges;
+    const [nodes, setNodes] = useState(load_nodes);
+    const [edges, setEdges] = useState(load_edges);
+
+    let id: number = props.maxid;
+    const getId = () => `node${++id}`;
 
     const [messageApi, contextHolder] = message.useMessage();
 
@@ -152,6 +160,21 @@ function Canvas(props: CanvasProp) {
         (event: React.MouseEvent, node: Node) => {
             console.log(node);
             console.log("move in graph: ", graphName);
+            fetch(backEndUrl + "/api/changePosition", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    graphName: graphName,
+                    id: node.id,
+                    position: node.position,
+                }),
+            }).then((response) =>
+            
+                console.log("pos",response.text())
+            )
         },
         [graphName]
     );
@@ -203,7 +226,7 @@ function Canvas(props: CanvasProp) {
                     graphName: graphName,
                     id: newNode.id,
                     name: newNode.type,
-                    // position: position,
+                    position: position,
                     submodule: subModule,
                 }),
             })

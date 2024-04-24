@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ReactFlowProvider } from "reactflow";
+import { Edge, Node, ReactFlowProvider } from "reactflow";
 import { Canvas } from "./Canvas/Canvas";
 import Sider from "./Sider/Sider";
 import "./App.css";
@@ -66,6 +66,7 @@ export default function App() {
     >(undefined);
     const [functions, setFunctions] = useState<[string, FuncInfo[]][]>([]);
     const [UDBMap, setUDBMap] = useState<Map<string, UDBInfo>>(new Map());
+    const [replay, setReplay] = useState(false)
 
     if (!parsedClassesWithInit)
         updateDatabase(() => {
@@ -145,11 +146,15 @@ export default function App() {
         canvasname?: string;
     };
 
+    const [nodes, setNodes] = useState<Node[]>([])
+    const [edges, setEdges] = useState<Edge[]>([])
+    const [maxLength, setMaxLength] = useState(0)
+
     const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
         const name = values.canvasname!;
         setGraphName(name);
         console.log("Success load value:", name);
-        fetch(backEndUrl + "/api/createGraph", {
+        fetch(backEndUrl + "/api/replayGraph", {
             method: "POST",
             headers: {
                 Accept: "application/json",
@@ -158,11 +163,62 @@ export default function App() {
             body: JSON.stringify({
                 graphName: name,
             }),
-        }).then((data) => {
-            console.log(data.text());
-        });
+        }).then((response) =>
+            response.json().then((data) => {
+                console.log("replay data: ",data)
+                data.map((item:any, key: Number) => {
+                    
+                    if (item.op == "addBlock"){
+                        setNodes( (prev) => {
+                            let nodeid = item.body.id as string
+                            const id =Number(nodeid.substring(4,nodeid.length));
+                            if (id > maxLength){
+                                setMaxLength(id)
+                            }
 
-        setIsModalOpen(false);
+                            return [...prev, item.body];
+                        })
+                    } else if (item.op == "addEdge"){
+                        setEdges((prev) => {
+                            let source_info = item.body.source as string
+                            let target_info = item.body.target as string
+
+                            let source = source_info.split("-")[1]
+                            let target = target_info.split("-")[1]
+
+                            let source_handle: string;
+                            let target_handle: string
+                            if (source == "input" && source_info.endsWith('-')){
+                                source_handle = source_info.substring(0,source_info.length-1)
+                            } else {
+                                source_handle = source_info
+                            }
+                            if (target_info.endsWith('-')) {
+                                target_handle = target_info + '0'
+                            } else {
+                                target_handle = target_info
+                            }
+
+                            let edge: Edge = {
+                                id: String(key),
+                                source: source,
+                                target: target,
+                                sourceHandle: source_handle,
+                                targetHandle: target_handle,
+                            }
+                            console.log("replay of edge: ", edge)
+
+                            return [...prev, edge]
+                        })
+                    }
+                    setReplay(true)
+                })
+                setIsModalOpen(false)
+                setReplay(true)
+            })
+        )
+
+        
     };
 
     const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (
@@ -249,7 +305,7 @@ export default function App() {
 
             <ReactFlowProvider>
                 <div className="main">
-                    {parsedClassesWithInit && UDBMap ? (
+                    {parsedClassesWithInit && UDBMap && replay ? (
                         <Sider
                             modules={parsedClassesWithInit}
                             funcs={functions}
@@ -258,13 +314,16 @@ export default function App() {
                             UDBMap={UDBMap}
                         />
                     ) : undefined}
-                    {parsedClassesWithInit && UDBMap ? (
+                    {parsedClassesWithInit && UDBMap && replay ? (
                         <Canvas
                             modules={parsedClassesWithInit}
                             funcs={functions}
                             graphName={graphName}
                             setGraphName={setGraphName}
                             UDBMap={UDBMap}
+                            nodes={nodes}
+                            edges={edges}
+                            maxid={maxLength}
                         />
                     ) : undefined}
                 </div>
