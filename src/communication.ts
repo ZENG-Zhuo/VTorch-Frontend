@@ -1,4 +1,5 @@
 import { UDBData } from "./common/UDBTypes";
+import { CodeGenInfo } from "./common/codeGenTypes";
 import { DatasetInfo } from "./common/datasetTypes";
 import { Database } from "./common/objectStorage";
 
@@ -119,5 +120,26 @@ export function addUDB(data: UDBData): Promise<Response> {
             "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+    });
+}
+
+export function genCode(data: CodeGenInfo): Promise<Response>{
+    return fetch(backEndUrl + "/api/generateCode", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    });
+}
+
+export function getModules(): Promise<Response>{
+    return fetch(backEndUrl + "/api/getReadyGraphs", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
     });
 }
