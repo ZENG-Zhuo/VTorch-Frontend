@@ -304,7 +304,7 @@ function ParamToInput(
                     id={paramHandle.id}
                     position={Position.Left}
                     style={{
-                        top: (pre_length + 1) * 45.75 + 49.75 * key + 75,
+                        top: (pre_length + 1) * 45.75 + 49.75 * key + 115,
                     }}
                     isConnectable={true}
                 />
@@ -375,20 +375,15 @@ function NNmoduleToDiv(module: Module, graphName: string) {
     //     targetHandles.map((t) => t.id)
     // );
     // console.log("IDT1: ", targetHandles);
+    
+    const [color, setColor] = useState("black");
+    const [messageApi, contextHolder] = message.useMessage();
+
     const targetHandlesComponent = classdict[nodeid].targetHandles.map(
         (targetHandle_split: TargetHandle, key: number) => {
-            // if (classdict[nodeid].targetHandles.length === 1){
-            //     targetHandle_split.id =
-            //         moduleName + "-" + nodeId + "-fwd-output";
-            // } else {
-            //     targetHandle_split.id =
-            //         moduleName + "-" + nodeId + "-fwd-output-" + String(key);
-            // }
-
-            // console.log("IDT: ", nodeId);
-            // console.log("IDT", module.targetsHandle[0].id);
             if (nodeid) {
                 if (classdict[nodeid].targetHandles.length === 1) {
+                    console.log("target handle generate haree");
                     classdict[nodeid].targetHandles[key].id =
                         moduleName + "-" + nodeId + "-fwd-output";
                     targetHandle_split.id =
@@ -421,20 +416,10 @@ function NNmoduleToDiv(module: Module, graphName: string) {
                         backgroundColor: "#ffff00",
                     }}
                     isConnectable={true}
-                    // onConnect={(connect: Connection) => {
-                    //     const { source, sourceHandle, target, targetHandle } =
-                    //         connect;
-                    //     if (targetHandle) {
-                    //         targetHandle_split.targets.push(targetHandle);
-                    //     }
-                    // }}
                 />
             );
         }
     );
-
-    const [color, setColor] = useState("black");
-    const [messageApi, contextHolder] = message.useMessage();
     const SourceHandlesComponent = classdict[nodeid].forwardHandles.map(
         (source_handle: SourceHandle, key: number) => {
             source_handle.id =
@@ -447,13 +432,7 @@ function NNmoduleToDiv(module: Module, graphName: string) {
 
             if (nodeid) {
                 classdict[nodeid].forwardHandles[key].id =
-                    moduleName +
-                    "-" +
-                    nodeId +
-                    "-fwd-" +
-                    name +
-                    "-" +
-                    String(key);
+                    moduleName + "-" + nodeId + "-fwd-" + name;
                 let ini_v = classdict[nodeid].forwardHandles[key].value;
                 if (ini_v) {
                     initial_value = ini_v;
@@ -504,7 +483,7 @@ function NNmoduleToDiv(module: Module, graphName: string) {
                         onBlur={onChange}
                         className="nodrag"
                         placeholder={initial_value}
-                        style={{color: color}}
+                        style={{ color: color }}
                     />
                     <Handle
                         className="handle"
@@ -522,14 +501,9 @@ function NNmoduleToDiv(module: Module, graphName: string) {
             );
         }
     );
-
     return (
         <div>
-            {/* <span>{nodeId}</span> */}
             <div>{targetHandlesComponent}</div>
-            {/* {forwardHandles.map((SourceHandle: SourceHandle, key: number) => {
-                return SourcesToInput(moduleName, nodeId, SourceHandle, key);
-            })} */}
             <div>{SourceHandlesComponent}</div>
             <br />
             <Collapse items={initItems} />

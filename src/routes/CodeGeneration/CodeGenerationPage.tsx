@@ -62,6 +62,7 @@ export default function CodeGenerationPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [code, setCode] = useState("");
     const [modulesName, setmodulesName] = useState<string[] | undefined>();
+    const [lock, setLock] = useState<boolean>(true);
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -91,33 +92,40 @@ export default function CodeGenerationPage() {
         });
     }
     if (!databaseLoaded) {
-        updateDatabase(() => {
-            const trochId = Database.findPackage("torch", "1.0.0");
-            if (trochId) {
-                const torch = Database.getPackage(trochId);
-                const utilsDataId = torch.getSubModule(
-                    ["torch", "utils", "data"],
-                    false
-                );
-                if (utilsDataId) {
-                    const utilsData = Database.getNode(utilsDataId);
-                    const dataLoader = utilsData.getClass("DataLoader");
-                    if (dataLoader) {
-                        setDataloaderClass(dataLoader);
-                        const __init__ = dataLoader.getFunctions("__init__");
-                        if (__init__.length === 0) {
-                            throw "dataloader has no init function!";
+        if (lock) {
+            setLock(false);
+
+            updateDatabase(() => {
+                const trochId = Database.findPackage("torch", "1.0.0");
+                if (trochId) {
+                    const torch = Database.getPackage(trochId);
+                    const utilsDataId = torch.getSubModule(
+                        ["torch", "utils", "data"],
+                        false
+                    );
+                    if (utilsDataId) {
+                        const utilsData = Database.getNode(utilsDataId);
+                        const dataLoader = utilsData.getClass("DataLoader");
+                        if (dataLoader) {
+                            setDataloaderClass(dataLoader);
+                            const __init__ =
+                                dataLoader.getFunctions("__init__");
+                            if (__init__.length === 0) {
+                                throw "dataloader has no init function!";
+                            }
+                            setDataloaderParams(
+                                Array(__init__[0].parameters.length - 2).fill(
+                                    ""
+                                )
+                            );
+                        } else {
+                            throw "DataLoader not found!";
                         }
-                        setDataloaderParams(
-                            Array(__init__[0].parameters.length - 2).fill("")
-                        );
-                    } else {
-                        throw "DataLoader not found!";
-                    }
-                } else throw "torch.utils.data not found!";
-            }
-            setDatabaseLoaded(true);
-        });
+                    } else throw "torch.utils.data not found!";
+                }
+                setDatabaseLoaded(true);
+            });
+        }
     } else {
         optimizers.clear();
         const trochId = Database.findPackage("torch", "1.0.0");

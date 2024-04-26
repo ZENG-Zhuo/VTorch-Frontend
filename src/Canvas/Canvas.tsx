@@ -53,16 +53,15 @@ const backEndUrl = "http://10.89.2.170:8001";
 
 // let id = initialNodes.length;
 
-
 interface CanvasProp {
     modules: Map<string, ClassInfo> | undefined;
     funcs: [string, FuncInfo[]][];
     graphName: string;
     setGraphName: React.Dispatch<React.SetStateAction<string>>;
     UDBMap: Map<string, UDBInfo>;
-    nodes: Node[],
-    edges: Edge[],
-    maxid: number,
+    nodes: Node[];
+    edges: Edge[];
+    maxid: number;
 }
 // let moduleChanged: boolean = false;
 // export function setModuleChanged() {
@@ -104,14 +103,16 @@ function Canvas(props: CanvasProp) {
     if (funcs) {
         funcs.forEach((funcinfo) => {
             if (funcinfo[1].length == 1) {
-                const funcModule = GenerateFunc(funcinfo[1][0]);
-                if (funcModule) NodesTypes[funcinfo[0]] = funcModule;
+                const funcModule = GenerateFunc(funcinfo[1][0], graphName);
+                if (funcModule) NodesTypes[funcinfo[1][0].name] = funcModule;
             } else {
                 funcinfo[1].forEach((func, idx) => {
-                    const funcModule = GenerateFunc(funcinfo[1][idx]);
-                    if (funcModule)
-                        NodesTypes[funcinfo[0] + "<" + String(idx + 1) + ">"] =
-                            funcModule;
+                    const funcModule = GenerateFunc(
+                        funcinfo[1][idx],
+                        graphName
+                    );
+                    // console.log("funcname:", func.name);
+                    if (funcModule) NodesTypes[func.name] = funcModule;
                 });
             }
         });
@@ -119,19 +120,23 @@ function Canvas(props: CanvasProp) {
 
     const UDBMap = props.UDBMap;
     if (UDBMap) {
-        // console.log("UBDMAP INFO: ", UDBMap);
-        UDBMap.forEach((value) => {
+        
+        UDBMap.forEach((value,key) => {
+            
             value.classes.map((value) => {
+                console.log("UBDMAP INFO: ", value);
                 const UBDClassModule = GenerateModuleFunction(value, graphName);
-                let name = value.name;
-                if (UBDClassModule) NodesTypes[name] = UBDClassModule;
+                let name = value.name
+                let new_name = "UDBclass-"+key+'-'+name
+                if (UBDClassModule) NodesTypes[new_name] = UBDClassModule;
             });
 
             value.functions.map((value) => {
-                const UBDFuncModule = GenerateFunc(value);
-                let name = value.name.split("$")[0];
+                const UBDFuncModule = GenerateFunc(value, graphName);
+                let name = value.name
+                let new_name = "UDBfunc-"+key+'-'+name
                 // console.log(name)
-                if (UBDFuncModule) NodesTypes[name] = UBDFuncModule;
+                if (UBDFuncModule) NodesTypes[new_name] = UBDFuncModule;
             });
         });
     }
@@ -171,10 +176,7 @@ function Canvas(props: CanvasProp) {
                     id: node.id,
                     position: node.position,
                 }),
-            }).then((response) =>
-            
-                console.log("pos",response.text())
-            )
+            }).then((response) => console.log("pos", response.text()));
         },
         [graphName]
     );
@@ -192,15 +194,15 @@ function Canvas(props: CanvasProp) {
             const submodule: string = event.dataTransfer.getData(
                 "application/reactflow2"
             );
+            const label: string = event.dataTransfer.getData(
+                "application/reactflow3"
+            );
             const subModule: string[] = submodule.split(",");
-
-            // let type = type.label
-            console.log("get submodule data here:", subModule);
-            console.log("type is: ", type);
             // check if the dropped element is valid
             if (typeof type === "undefined" || !type) {
                 return;
             }
+            console.log("drag over:",type)
 
             const position = reactFlowInstance?.project({
                 x: event.clientX - reactFlowBounds!.left,
@@ -208,9 +210,9 @@ function Canvas(props: CanvasProp) {
             });
             const newNode = {
                 id: getId(),
-                type,
+                type: type,
                 position,
-                data: { label: `${type} node` },
+                // data: { label: `${type} node` },
             };
             console.log("graphName = ", graphName);
             console.log("submodule", submodule);
@@ -225,7 +227,7 @@ function Canvas(props: CanvasProp) {
                 body: JSON.stringify({
                     graphName: graphName,
                     id: newNode.id,
-                    name: newNode.type,
+                    name: type,
                     position: position,
                     submodule: subModule,
                 }),
@@ -377,7 +379,7 @@ function Canvas(props: CanvasProp) {
                     messageApi.open({
                         key: msgKey,
                         type: "error",
-                        content: "You cannot connect this edge",
+                        content: "network error",
                         duration: 2,
                     });
                 });
@@ -526,7 +528,7 @@ function Canvas(props: CanvasProp) {
                             color="#ccc"
                             variant={BackgroundVariant.Lines}
                         />
-                        <FloatButton href="/" icon={<LeftOutlined />} />
+                        <FloatButton href="/homePage" icon={<LeftOutlined />} />
                     </ReactFlow>
                 )}
             </div>

@@ -37,7 +37,7 @@ export default function Root() {
       <br/><br/>
       <div className='buttons'>
         <Flex justify={justify} gap="large" align={alignItems} wrap="wrap">
-          <Button size='large' type='primary' href='/LoginPage' >Login in or register here</Button>
+          <Button size='large' type='primary' href='/HomePage' >get started</Button>
         </Flex>
       </div>
     </div>

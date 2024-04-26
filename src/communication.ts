@@ -143,3 +143,13 @@ export function getModules(): Promise<Response>{
         },
     });
 }
+
+export function getAllModules(): Promise<Response>{
+    return fetch(backEndUrl + "/api/getAllGraphs", {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        },
+    });
+}

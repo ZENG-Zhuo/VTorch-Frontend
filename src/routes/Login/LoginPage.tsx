@@ -104,7 +104,7 @@ const LoginPage = () => {
                     </Form.Item>
 
                     {/* <Form.Item wrapperCol={{ offset: 8, span: 16 }} style={{alignItems: "center"}}> */}
-                        <Button type="primary" htmlType="submit" href='/' style={{width:200}}> Login  </Button>
+                        <Button type="primary" htmlType="submit"  style={{width:200}}> Login  </Button>
                         <div> <br></br> </div>
                         <Button type="primary" htmlType="submit" href='/RegisterPage' style={{width:200}}>Register</Button>
                     {/* </Form.Item> */}

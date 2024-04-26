@@ -2,12 +2,14 @@ import { ChangeEvent, Children, ComponentType, forwardRef, useCallback, useState
 import { Connection, Handle, NodeProps, Position, useNodeId } from "reactflow";
 import { ClassInfo, TypeInfo,FuncInfo } from "../common/pythonObjectTypes";
 import type { CollapseProps } from "antd";
-import { Collapse } from "antd";
+import { Collapse, message } from "antd";
 import { NodeId } from "../common/pythonFileTypes";
 import { connect } from "http2";
 import { ClassInstance, GetClassDict, SourceHandle, TargetHandle} from "./LayerNode";
 
-
+const backEndUrl = "http://10.89.2.170:8001";
+// const backEndUrl = "http://192.168.8.17:8001";
+const msgKey = "FuncNodes"
 
 let classdict = GetClassDict()
 class FuncModule {
@@ -27,7 +29,7 @@ class FuncModule {
 }
 
 
-function FucModuleToDiv(module: FuncModule) {
+function FucModuleToDiv(module: FuncModule, graphName: string) {
     let nodeid = useNodeId();
     // const module = props.module;
     let forwardHandles = module.sourcesHandle;
@@ -47,6 +49,12 @@ function FucModuleToDiv(module: FuncModule) {
     // console.log("output classdict data", classdict[nodeid]);
     // console.log(classdict[nodeid].paramsHandles.length)
 
+    // const [boxValue, setBoxValue] = useState<string>("")
+
+    const [color, setColor] = useState("black");
+    const [messageApi, contextHolder] = message.useMessage();
+
+    
     const targetHandlesComponent = classdict[nodeid].targetHandles.map(
         (targetHandle_split: TargetHandle, key: number) => {
             targetHandle_split.id =
@@ -54,11 +62,32 @@ function FucModuleToDiv(module: FuncModule) {
             // console.log("IDT: ", nodeId);
             // console.log("IDT", module.targetsHandle[0].id);
             if(nodeid){
-                classdict[nodeid].targetHandles[key].id =
-                moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+                // classdict[nodeid].targetHandles[key].id =
+                // moduleName + "-" + nodeId + "-fwd-output-" + String(key);
+
+                if (classdict[nodeid].targetHandles.length === 1) {
+                    console.log("target handle generate haree")
+                    classdict[nodeid].targetHandles[key].id =
+                        moduleName + "-" + nodeId + "-fwd-output";
+                    targetHandle_split.id =
+                        moduleName + "-" + nodeId + "-fwd-output";
+                } else {
+                    classdict[nodeid].targetHandles[key].id =
+                        moduleName +
+                        "-" +
+                        nodeId +
+                        "-fwd-output-" +
+                        String(key);
+                    targetHandle_split.id =
+                        moduleName +
+                        "-" +
+                        nodeId +
+                        "-fwd-output-" +
+                        String(key);
+                }
             }
 
-            
+
 
             return (
                 <Handle
@@ -76,23 +105,52 @@ function FucModuleToDiv(module: FuncModule) {
             );
         }
     );
-
-    const [boxValue, setBoxValue] = useState<string>("")
-
     const SourceHandlesComponent = classdict[nodeid].forwardHandles.map(
         (source_handle: SourceHandle, key: number) => {
+            let source_name = source_handle.name
             source_handle.id =
-                moduleName + "-" + nodeId + "-fwd-input-" + String(key);
+                moduleName + "-" + nodeId + "-fwd-" + source_handle.name
             if(nodeid){
                 classdict[nodeid].forwardHandles[key].id =
-                moduleName + "-" + nodeId + "-fwd-input-" + String(key);
+                moduleName + "-" + nodeId + "-fwd-" + source_handle.name
             }
             let name = source_handle.name
-            let initial_value = "";
+            let initial_value = source_handle.value
             const onChange = (evt: ChangeEvent<HTMLInputElement>) => {
                 console.log(evt.target.value);
-                source_handle.value = evt.target.value;
-                setBoxValue(evt.target.value);
+                console.log("graphName", graphName)
+                // setBoxValue(evt.target.value);
+                fetch(backEndUrl + "/api/changeArgument", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        graphName: graphName,
+                        target: source_handle.id,
+                        value: evt.target.value,
+                    }),
+                })
+                    .then((data) => {
+                        console.log("getdata")
+                        // console.log(data.text())
+                        if (data.status == 200) {
+                            setColor("black");
+                            source_handle.value = evt.target.value;
+                        } else {
+                            setColor("red");
+                            data.text().then((data) => {
+                                messageApi.open({
+                                    key: msgKey,
+                                    type: "error",
+                                    content: data,
+                                    duration: 2,
+                                });
+                            });
+                        }
+                    })
+                    .catch((e) => console.log(e));
             }
 
             return (
@@ -100,10 +158,10 @@ function FucModuleToDiv(module: FuncModule) {
                     <span>{name}</span> <br />
                     <input
                         name="text"
-                        onChange={onChange}
-                        value={boxValue}
+                        onBlur={onChange}
                         className="nodrag"
-                        // placeholder={initial_value}
+                        placeholder={initial_value}
+                        style={{color: color}}
                     />
                     <Handle
                         className="handle"
@@ -124,7 +182,6 @@ function FucModuleToDiv(module: FuncModule) {
 
     );
 
-    
     return (
         <div>
             <div>{targetHandlesComponent}</div>
@@ -136,20 +193,25 @@ function FucModuleToDiv(module: FuncModule) {
 
 
 function GenerateFunc(
-    funcInfo: FuncInfo
+    funcInfo: FuncInfo,
+    graphName: string
 ): ComponentType<NodeProps> | undefined {
     
     let forwardFunc = funcInfo
+    // console.log("funcInfo :", funcInfo)
 
     const sourcesHandle = forwardFunc.parameters.map((param) => {
         let newSourceHandle: SourceHandle;
         let initial_value = param.initial_value;
+        
 
         if (param.name == "self") {
             return;
         }
 
+        // let newSourceHandle : SourceHandle;
         if (param.initial_value) {
+            // console.log("func gen:", param.name, param.initial_value)
             newSourceHandle = new SourceHandle(
                 "Tensor",
                 param.name,
@@ -201,7 +263,7 @@ function GenerateFunc(
             <div className="text-updater-node">
                 <span style={{ fontSize: 25 }}>{moduleName.split("$")[0]}</span>
                 <br />
-                {FucModuleToDiv(module)}
+                {FucModuleToDiv(module, graphName)}
             </div>
         );
     };

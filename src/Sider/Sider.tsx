@@ -66,19 +66,23 @@ function Sider(props: SiderProp) {
             // console.log("func info", func)
             if (func[1].length == 1){
                 funcNodes.push({
-                    type: func[0],
+                    type: func[1][0].name,
                     data: { label: func[0], submodule: ["torch"] },
                 });
             } else {
                 func[1].forEach((fc,idx)=>{
                     let func_label = func[0] + '<' + String(idx+1) + '>'
+                    // let func_label = fc.name
+                    // console.log("fc info: ",fc)
+                    // console.log("func info:", func)
                     funcNodes.push({
-                        type: func_label,
+                        type: fc.name,
                         data: { label: func_label, submodule: ["torch"] },
                     });
                 })
             }
         })
+        // console.log("funcNodesss", funcNodes);
     }else {
         // console.log('func info fail to get')
     }
@@ -87,10 +91,10 @@ function Sider(props: SiderProp) {
         return (
             <div>
                 <Nav.Menu
-                eventKey={"UDBtoDiv"+key + "-classes"}
-                placement="rightStart"
-                title="UDB-class"
-                icon={<MagicIcon />}
+                    eventKey={"UDBtoDiv"+key + "-classes"}
+                    placement="rightStart"
+                    title={"UDBtoDiv-"+key + "-classes"}
+                    icon={<MagicIcon />}
                 >
                 <div className="nodes">
                     {value.classes.map(x => {
@@ -103,7 +107,7 @@ function Sider(props: SiderProp) {
                             x.name,
                         ])}
                         onDragStart={(event: any) =>
-                            onDragStart(event, {label: x.name, submodule: ["UDB",key]})
+                            onDragStart(event, {label: x.name, submodule: ["UDB",key]}, "UDBclass-"+key+'-'+x.name)
                         }
                         draggable>
                             {x.name}
@@ -113,10 +117,10 @@ function Sider(props: SiderProp) {
                 </Nav.Menu>
 
                 <Nav.Menu
-                eventKey={"UDBtoDiv"+key + "-funcs"}
-                placement="rightStart"
-                title="UDB-funcs"
-                icon={<MagicIcon />}
+                    eventKey={"UDBtoDiv-"+key + "-funcs"}
+                    placement="rightStart"
+                    title={"UDBtoDiv-"+key + "-funcs"}
+                    icon={<MagicIcon />}
                 >
                     <div className="nodes">
                 {value.functions.map(x => {
@@ -130,7 +134,7 @@ function Sider(props: SiderProp) {
                         new_name,
                     ])}
                     onDragStart={(event: any) =>
-                        onDragStart(event, {label:new_name, submodule:["UDB",key]})
+                        onDragStart(event, {label:new_name, submodule:["UDB",key]},"UDBfunc-"+key+'-'+x.name)
                     }
                     draggable>
                         {new_name}
@@ -142,48 +146,36 @@ function Sider(props: SiderProp) {
         )
     }
 
-    const onDragStart = (event: any, data: any) => {
+    const onDragStart = (event: any, data: any, type:string) => {
         console.log("output the nodetype");
-        console.log(data.submodule)
-        // console.log("drag the data:",data);
-        event.dataTransfer.setData("application/reactflow", data.label);
+        console.log("drag start:",type);
+        event.dataTransfer.setData("application/reactflow", type);
         event.dataTransfer.setData("application/reactflow2",data.submodule);
+        event.dataTransfer.setData("application/reactflow3",data.label);
         event.dataTransfer.effectAllowed = "move";
     };
 
     const edges = useStore((state) => state.edges);
     const reactflow = useReactFlow();
     function OnClickButton() {
-        let nodes = structuredClone(
-            GetClassDict()
-        );
+        // let nodes = structuredClone(
+        //     GetClassDict()
+        // );
+        // console.log("nodes: ", nodes)
+        // var jsonData = JSON.stringify(nodes, null, "\t");
+        // console.log(jsonData);
 
-        console.log("nodes: ", nodes)
-        var jsonData = JSON.stringify(nodes, null, "\t");
-        console.log(jsonData);
-
-        fetch((backEndUrl + '/api/genPythonCode'), {
-            method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                graphName: graphName,
-            }),
-        }).then((data)=>{
-            console.log(data.text())
-        })
+        window.location.reload();
 
     }
 
     return (
         <div className="sider">
             <span className="sider_title"> Layer Choice </span>
-            <button className="save" onClick={OnClickButton}>
-                show the state
+            <button className="save" onClick={OnClickButton} style={{color:"#F00000"}}>
+                Enter Another Graph
             </button>
-
+            <br/><br/>
             <Sidenav>
                 <Sidenav.Body>
                     <Nav>
@@ -204,7 +196,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.data)
+                                                onDragStart(event, x.data, x.type)
                                             }
                                             draggable
                                         >
@@ -232,7 +224,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.data)
+                                                onDragStart(event, x.data, x.type)
                                             }
                                             draggable
                                         >
@@ -260,7 +252,7 @@ function Sider(props: SiderProp) {
                                                 x.data.label,
                                             ])}
                                             onDragStart={(event: any) =>
-                                                onDragStart(event, x.data)
+                                                onDragStart(event, x.data, x.type)
                                             }
                                             draggable
                                         >
