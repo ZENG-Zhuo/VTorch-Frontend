@@ -11,7 +11,7 @@ export function UDBPage() {
     const {
         token: { colorBgContainer, borderRadiusLG },
     } = theme.useToken();
-    const [UDBCode, setUDBCode] = useState<string | undefined>();
+    const [UDBCode, setUDBCode] = useState<string | undefined>(defaultCode);
     const [UDBName, setUDBName] = useState("");
     const [messageApi, contextHolder] = message.useMessage();
     const msgKey = "UDBPage";
